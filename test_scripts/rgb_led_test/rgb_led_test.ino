@@ -1,6 +1,6 @@
-const int RED_PIN = 25;    // RED pin of the LED to PWM pin 4
-const int GREEN_PIN = 26 ;  // GREEN pin of the LED to PWM pin 5
-const int BLUE_PIN = 27;   // BLUE pin of the LED to PWM pin 6
+const int RED_PIN = 18;    // RED pin of the LED to PWM pin 4
+const int GREEN_PIN = 17 ;  // GREEN pin of the LED to PWM pin 5
+const int BLUE_PIN = 16;   // BLUE pin of the LED to PWM pin 6
 const int LED_UPDATE_RATE = 20;
 int brightness = 0; // LED brightness
 int increment = 5;  // brightness increment
