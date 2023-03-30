@@ -17,8 +17,10 @@ NTPClient timeClient(ntpUDP);
 
 // Time data info
 int cur_hour, cur_min, cur_sec, cur_day;
+int disp_hour;
 char time_buffer[30];
 const String DAYS_OF_THE_WEEK[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+long clock_timer;
 
 void setup() {
   // Initialize Serial Monitor
@@ -44,26 +46,59 @@ void setup() {
   // GMT -1 = -3600
   // GMT 0 = 0
   timeClient.setTimeOffset(-14400); // GMT -4
+  clock_timer = millis();
+  fetch_time();
+  display_time();
 }
 
 void loop() {
+  if (millis() - clock_timer > 1000) {
+    clock_timer = millis();
+    // Now increase the seconds by one.
+    cur_sec += 1;
+    // If the seconds go above 59 then the minutes should increase and
+    // the seconds should wrap back to 0.
+    if (cur_sec > 59) {
+      cur_sec = 0;
+      cur_min += 1;
+      // Again if the minutes go above 59 then the hour should increase and
+      // the minutes should wrap back to 0.
+      if (cur_min > 59) {
+        cur_min = 0;
+        cur_hour += 1;
+        // At midnight, rollover (redundant because of time reload)
+        if (cur_hour > 23) {
+          cur_hour = 0;
+        }
+        // Reload the time at the top of every hour
+        fetch_time();
+      }
+    }
+
+    display_time();
+  }
+}
+
+void display_time() {
+  String am_pm = "AM";
+  disp_hour = cur_hour;
+  if (disp_hour > 12) {
+    disp_hour -= 12;
+    am_pm = "PM";
+  } else if (disp_hour == 0) {
+    disp_hour = 12;
+  }
+
+  sprintf(time_buffer, "%02d:%02d:%02d %s - %s", disp_hour, cur_min, cur_sec, am_pm, DAYS_OF_THE_WEEK[cur_day]);
+
+  Serial.println(time_buffer);
+}
+
+void fetch_time() {
   timeClient.update();
   cur_hour = timeClient.getHours();
   cur_min = timeClient.getMinutes();
   cur_sec = timeClient.getSeconds();
   cur_day = timeClient.getDay();
-  String am_pm = "AM";
-  if (cur_hour > 12) {
-    cur_hour -= 12;
-    am_pm = "PM";
-  } else if (cur_hour == 0) {
-    cur_hour = 12;
-  }
-
-  sprintf(time_buffer, "%02d:%02d:%02d %s - %s", cur_hour, cur_min, cur_sec, am_pm, DAYS_OF_THE_WEEK[cur_day]);
-  
-
-  Serial.println(time_buffer);
-
-  delay(1000);
+  Serial.println("Fetched time: " + timeClient.getFormattedTime());
 }
