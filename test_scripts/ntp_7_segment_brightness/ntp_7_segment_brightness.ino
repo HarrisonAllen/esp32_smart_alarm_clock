@@ -59,12 +59,7 @@ void setup() {
 
   // Initialize a NTPClient to get time
   timeClient.begin();
-  // Set offset time in seconds to adjust for your timezone, for example:
-  // GMT +1 = 3600
-  // GMT +8 = 28800
-  // GMT -1 = -3600
-  // GMT 0 = 0
-  timeClient.setTimeOffset(-14400); // GMT -4
+  timeClient.setTimeOffset(-14400); // GMT -4, hours -> seconds
   clockTimer = millis();
   fetchTime();
   displayTime();
