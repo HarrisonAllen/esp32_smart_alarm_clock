@@ -4,6 +4,8 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebSrv.h>
 #include "Adafruit_LEDBackpack.h"
 #include "7-Segment-ASCII_HEX.h"
 #include "Adafruit_Trellis.h"
@@ -60,6 +62,8 @@ Adafruit_Trellis matrix0 = Adafruit_Trellis();
 Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
 long trellisTimer;
 
+// Create AsyncWebServer object on port 80
+AsyncWebServer server(80);
 
 void setup() {
   // Initialize Serial Monitor
@@ -84,13 +88,20 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  Serial.println("");
+  Serial.println("WiFi connected.");
   // Stop blinking after wifi connected
   clockDisplay.blinkRate(0);
   clockDisplay.writeDisplay();
 
+  // Serve Webpage
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SD, "/webserver/index.html", "text/html");
+  });
+  server.serveStatic("/", SD, "/webserver/");
+  server.begin();
+
   // Display local IP address
-  Serial.println("");
-  Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   displayIP();
