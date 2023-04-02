@@ -18,7 +18,7 @@ NTPClient timeClient(ntpUDP);
 // I2C address of the 7-segment display
 #define DISPLAY_ADDRESS   0x70
 Adafruit_7segment clockDisplay = Adafruit_7segment();
-const uint8_t loadingScreen[] = {0b00111001, 0b00001001, 0b00001001, 0b00001111};
+const uint8_t LOADING_SCREEN[] = {0b00111001, 0b00001001, 0b00001001, 0b00001111};
 
 // Time data info
 int hour, minute, second, day;
@@ -26,14 +26,21 @@ int displayHour;
 int displayValue;
 const String DAYS_OF_THE_WEEK[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 long clockTimer;
-uint8_t brightness = 0;
+uint8_t clockBrightness = 0;
 
 // Photocell
-int photocellPin = 36;     // the cell and 10K pulldown are connected to pin 36
+const int PHOTOCELL_PIN = 36;     // the cell and 10K pulldown are connected to pin 36
 const int MIN_READING = 800; // Where I would say a room is "dark"
 const int MAX_READING = 4096; // 2^12 - 1
-const int MIN_BRIGHTNESS = 0;
-const int MAX_BRIGHTNESS = 15;
+const int MIN_CLOCK_BRIGHTNESS = 0;
+const int MAX_CLOCK_BRIGHTNESS = 15;
+
+// nOOds fiber
+const int NOODS_PIN = 2;
+const int MIN_NOODS_BRIGHTNESS = 0;
+const int MAX_NOODS_BRIGHTNESS = 255;
+const int NOODS_UPDATE_RATE = 100;
+long noodsTimer;
 
 void setup() {
   // Initialize Serial Monitor
@@ -68,10 +75,14 @@ void setup() {
   clockTimer = millis();
   fetchTime();
   displayTime();
+
+  // nOOds
+  noodsTimer = millis();
 }
 
 void loop() {
   timeLoop();
+  noodsLoop();
 }
 
 void timeLoop() {
@@ -97,6 +108,13 @@ void timeLoop() {
   }
 }
 
+void noodsLoop() {
+  if (millis() - noodsTimer > NOODS_UPDATE_RATE) {
+    analogWrite(NOODS_PIN, calculateNoodsBrightness(analogRead(PHOTOCELL_PIN)));
+    noodsTimer = millis();
+  }  
+}
+
 void displayIP() {
   IPAddress ip = WiFi.localIP();
   Serial.println("It's ip time");
@@ -113,7 +131,7 @@ void displayIP() {
 
 void displayLoading() {
   clockDisplay.blinkRate(1);
-  writeDigitsRaw(loadingScreen);
+  writeDigitsRaw(LOADING_SCREEN);
 }
 
 void writeDigitsRaw(const uint8_t *digits) {
@@ -155,17 +173,21 @@ void displayTime() {
   clockDisplay.print(displayValue, DEC);
 
   clockDisplay.writeDigitRaw(2, (am ? 0x04 : 0x08) | ((second % 2 == 0) ? 0x02 : 0x00));
-  brightness = calculateBrightness(analogRead(photocellPin));
-  clockDisplay.setBrightness(brightness);
+  clockBrightness = calculateClockBrightness(analogRead(PHOTOCELL_PIN));
+  clockDisplay.setBrightness(clockBrightness);
   clockDisplay.writeDisplay();
 }
 
-uint8_t calculateBrightness(int photocellReading) {
+uint8_t calculateClockBrightness(int photocellReading) {
   if (photocellReading <= MIN_READING) {
-    return MIN_BRIGHTNESS;
+    return MIN_CLOCK_BRIGHTNESS;
   } else {
-    return map(photocellReading, MIN_READING, MAX_READING, MIN_BRIGHTNESS, MAX_BRIGHTNESS+1);
+    return map(photocellReading, MIN_READING, MAX_READING, MIN_CLOCK_BRIGHTNESS, MAX_CLOCK_BRIGHTNESS+1);
   }
+}
+
+uint8_t calculateNoodsBrightness(int photocellReading) {
+  return map(photocellReading, 0, MAX_READING, MIN_NOODS_BRIGHTNESS, MAX_NOODS_BRIGHTNESS+1);
 }
 
 void fetchTime() {
