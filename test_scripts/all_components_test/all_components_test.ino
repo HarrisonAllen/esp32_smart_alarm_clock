@@ -6,6 +6,10 @@
 #include <Adafruit_GFX.h>
 #include "Adafruit_LEDBackpack.h"
 #include "7-Segment-ASCII_HEX.h"
+#include "Adafruit_Trellis.h"
+#include "Audio.h"
+#include "SD.h"
+#include "FS.h"
 
 // Wifi credentials
 const char* ssid     = "Cozy Cove";
@@ -42,6 +46,21 @@ const int MAX_NOODS_BRIGHTNESS = 255;
 const int NOODS_UPDATE_RATE = 100;
 long noodsTimer;
 
+// I2S Connections
+#define I2S_DOUT      27
+#define I2S_BCLK      14
+#define I2S_LRC       12
+
+// Audio object
+Audio audio;
+
+// Trellis
+#define numKeys 16
+Adafruit_Trellis matrix0 = Adafruit_Trellis();
+Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
+long trellisTimer;
+
+
 void setup() {
   // Initialize Serial Monitor
   Serial.begin(115200);
@@ -49,6 +68,13 @@ void setup() {
   // Setup the display.
   clockDisplay.begin(DISPLAY_ADDRESS);
   displayLoading();
+  
+  // Start microSD Card
+  if(!SD.begin())
+  {
+    Serial.println("Error accessing microSD card!");
+    while(true); 
+  }
   
   // Connect to wifi
   Serial.print("Connecting to ");
@@ -68,6 +94,23 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   displayIP();
+  
+  // Setup I2S 
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+
+  // Setup trellis
+  trellis.begin(0x71);
+  // Turn on all LEDs
+  for (uint8_t i=0; i<numKeys; i++) {
+    trellis.setLED(i);
+  }
+  trellis.writeDisplay();
+  delay(250);
+  // Turn off all LEDs
+  for (uint8_t i=0; i<numKeys; i++) {
+    trellis.clrLED(i);
+  }
+  trellis.writeDisplay();
 
   // Initialize a NTPClient to get time
   timeClient.begin();
@@ -83,6 +126,8 @@ void setup() {
 void loop() {
   timeLoop();
   noodsLoop();
+  trellisLoop();
+  audio.loop();
 }
 
 void timeLoop() {
@@ -113,6 +158,32 @@ void noodsLoop() {
     analogWrite(NOODS_PIN, calculateNoodsBrightness(analogRead(PHOTOCELL_PIN)));
     noodsTimer = millis();
   }  
+}
+
+void trellisLoop() {
+  if (millis() - trellisTimer > 30) {
+    // If a button was just pressed or released...
+    if (trellis.readSwitches()) {
+      // go through every button
+      for (uint8_t i=0; i<numKeys; i++) {
+        // if it was pressed, turn LED on
+        if (trellis.justPressed(i)) {
+          Serial.print("v"); Serial.println(i);
+          trellis.setLED(i);
+          audio.setVolume(i+5);
+          audio.connecttoFS(SD,"/audio/pop.mp3");
+        } 
+        // if it was released, turn LED off
+        if (trellis.justReleased(i)) {
+          Serial.print("^"); Serial.println(i);
+          trellis.clrLED(i);
+        }
+      }
+      // tell the trellis to set the LEDs we requested
+      trellis.writeDisplay();
+    }
+    trellisTimer = millis();
+  }
 }
 
 void displayIP() {
