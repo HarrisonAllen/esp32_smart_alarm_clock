@@ -1,0 +1,15 @@
+Sound KEYWORD1
+soundLoop KEYWORD2
+play KEYWORD2
+stop KEYWORD2
+setVolume KEYWORD2
+changeVolume KEYWORD2
+volumeUp KEYWORD2
+volumeDown KEYWORD2
+setSoundFile KEYWORD2
+setLoop KEYWORD2
+getVolume KEYWORD2
+isPlaying KEYWORD2
+isLooping KEYWORD2
+getState KEYWORD2
+getAudio KEYWORD2
