@@ -14,7 +14,6 @@
 #include "Arduino.h"
 #include "Audio.h"
 #include "SD.h"
-#include "FS.h"
 
 // I2S Connections
 #define I2S_DOUT      27
