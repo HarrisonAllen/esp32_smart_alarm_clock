@@ -39,7 +39,7 @@ void setup() {
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
     
     // Set Volume
-    audio.setVolume(2);
+    audio.setVolume(21);
     
     // Open music file
     audio.connecttoFS(SD,"/audio/alarm.wav");
