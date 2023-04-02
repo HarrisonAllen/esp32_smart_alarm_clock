@@ -8,7 +8,7 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-#include "Adafruit_LEDBackpack.h"\
+#include "Adafruit_LEDBackpack.h"
 
 // Replace with your network credentials
 const char* ssid     = "Cozy Cove";
