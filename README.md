@@ -35,3 +35,5 @@ Some plans, very tentative:
     - Any change should update the database via post request
     - Button to add new alarms [+]
   - Could be fun to try something like a sleep playlist, where the alarm clock will stream a song or playlist for x minutes or something, then automatically turn off
+
+Note: For compiling, I'm using `ESP32 Dev Module` and `Partition Scheme: "Huge APP (3MB no OTA/1MB SPIFFS):"`. This is to increase program space, and since I'm not using OTA or SPIFFS it's a better choice for this project. May want to look into increasing flash size? It looks like it can go up to 16MB, but I don't know what the tradeoffs for that are. Currently running 4MB.
