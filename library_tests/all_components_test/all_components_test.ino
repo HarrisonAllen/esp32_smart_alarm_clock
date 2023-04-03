@@ -31,7 +31,7 @@ ClockController clockController(&clockDisplay, photocellPin);
 const int NOODS_PIN = 2;
 const int MIN_NOODS_BRIGHTNESS = 0;
 const int MAX_NOODS_BRIGHTNESS = 255;
-const int NOODS_UPDATE_RATE = 100;
+const int NOODS_UPDATE_RATE = 25;
 long noodsTimer;
 
 // I2S Connections
