@@ -1,5 +1,5 @@
 /*
-    Sound.cpp
+    Sound.cpp - Library for controlling sound files via SD card
 */
 
 #include "Sound.h"

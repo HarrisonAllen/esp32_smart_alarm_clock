@@ -1,5 +1,5 @@
 /*
-    Sound class
+    Sound.h - Library for controlling sound files via SD card
 */
 #ifndef Sound_h
 #define Sound_h
