@@ -18,16 +18,17 @@ const int photocellPin = 36;
 ClockController clockController(&clockDisplay, photocellPin);
 
 // Local Sketch Variables
-bool wifiConnected = false;
 long wifiTimer;
 int hour, minute, second, day;
 
 void setup() {
     Serial.begin(115200);
 
+    // Initialize clock
     clockController.begin();
     clockController.displayLoading();
 
+    // Connect to wifi
     Serial.print("Connecting to ");
     Serial.print(ssid);
     WiFi.begin(ssid, password);
@@ -40,7 +41,7 @@ void setup() {
         }
         clockController.loop();
     }
-    // Print local IP address and start web server
+    // Print local IP address
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
