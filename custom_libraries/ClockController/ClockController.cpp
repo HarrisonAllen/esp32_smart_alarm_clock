@@ -6,6 +6,7 @@ ClockController::ClockController(Adafruit_7segment *clockDisplay, int photocellP
 }
 
 void ClockController::begin() {
+    pinMode(_photocellPin, INPUT);
     _timer = millis();
     _clockDisplay->begin(DISPLAY_ADDRESS);
 }
