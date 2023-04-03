@@ -1,0 +1,16 @@
+ClockController KEYWORD1
+begin KEYWORD2
+loop KEYWORD2
+setTime KEYWORD2
+ignoreTimeUpdate KEYWORD2
+displayTime KEYWORD2
+displayLoading KEYWORD2
+displayIP KEYWORD2
+displayError KEYWORD2
+writeDigitsRaw KEYWORD2
+drawCharArray KEYWORD2
+drawCharAtPosition KEYWORD2
+updateBrightness KEYWORD2
+calculateBrightness KEYWORD2
+getState KEYWORD2
+needsTimeUpdate KEYWORD2
