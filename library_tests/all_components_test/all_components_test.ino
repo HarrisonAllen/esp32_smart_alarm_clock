@@ -7,6 +7,7 @@
 #include <AsyncTCP.h>
 #include <Sound.h>
 #include <ClockController.h>
+#include <nOOds.h>
 #include <ESPAsyncWebSrv.h>
 #include "Adafruit_LEDBackpack.h"
 #include "7-Segment-ASCII_HEX.h"
@@ -29,8 +30,7 @@ ClockController clockController(&clockDisplay, photocellPin);
 
 // nOOds fiber
 const int NOODS_PIN = 2;
-const int MIN_NOODS_BRIGHTNESS = 0;
-const int MAX_NOODS_BRIGHTNESS = 255;
+nOOds nood(NOODS_PIN);
 const int NOODS_UPDATE_RATE = 25;
 long noodsTimer;
 
@@ -134,7 +134,7 @@ void loop() {
 
 void noodsLoop() {
   if (millis() - noodsTimer > NOODS_UPDATE_RATE) {
-    analogWrite(NOODS_PIN, calculateNoodsBrightness(analogRead(photocellPin)));
+    nood.setBrightness(calculateNoodsBrightness(analogRead(photocellPin)));
     noodsTimer = millis();
   }  
 }
