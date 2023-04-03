@@ -42,7 +42,7 @@ void Sound::stop() {
 
 int Sound::setVolume(int volume) {
     _audio->setVolume(constrain(volume, 0, _audio->maxVolume()));
-    return _audio.getVolume();
+    return _audio->getVolume();
 }
 
 int Sound::changeVolume(int change) {
