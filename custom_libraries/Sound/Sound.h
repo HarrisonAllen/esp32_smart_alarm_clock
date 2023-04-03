@@ -27,11 +27,12 @@ class Sound {
         void loop();
         void play();
         void stop();
+        void playOnce(char * soundFile);
         // Setters
-        void setVolume(int volume);
-        void changeVolume(int change);
-        void volumeUp(int change = 1);
-        void volumeDown(int change = 1);
+        int setVolume(int volume);
+        int changeVolume(int change);
+        int volumeUp(int change = 1);
+        int volumeDown(int change = 1);
         void setSoundFile(char * soundFile);
         void setRepeating(bool shouldRepeat);
         // Getters

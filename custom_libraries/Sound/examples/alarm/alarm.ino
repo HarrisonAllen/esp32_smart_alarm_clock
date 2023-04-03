@@ -30,10 +30,8 @@ void loop()
   sound.loop();
   if (alarm_playing && millis() - soundTimer > 5000) {
     sound.stop();
-    sound.setSoundFile("/audio/epic_music.mp3");
     sound.volumeUp(10);
-    sound.setRepeating(false);
-    sound.play();
+    sound.playOnce("/audio/epic_music.mp3");
     alarm_playing = false;
   } else if (!sound.isPlaying()) {
     sound.stop();

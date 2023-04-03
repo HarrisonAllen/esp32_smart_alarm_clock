@@ -154,8 +154,7 @@ void trellisLoop() {
           Serial.print("v"); Serial.println(i);
           trellis.setLED(i);
           sound.setVolume(i+5);
-          sound.setSoundFile("/audio/pop.mp3");
-          sound.play();
+          sound.playOnce("/audio/pop.mp3");
         } 
         // if it was released, turn LED off
         if (trellis.justReleased(i)) {

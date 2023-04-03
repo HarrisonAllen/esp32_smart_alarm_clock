@@ -29,25 +29,32 @@ void Sound::play() {
     _audio->connecttoFS(SD, _filename);
 }
 
+void Sound::playOnce(char *soundFile) {
+    setSoundFile(soundFile);
+    setRepeating(false);
+    play();
+}
+
 void Sound::stop() {
     _playing = false;
     _audio->stopSong();
 }
 
-void Sound::setVolume(int volume) {
+int Sound::setVolume(int volume) {
     _audio->setVolume(constrain(volume, 0, _audio->maxVolume()));
+    return _audio.getVolume();
 }
 
-void Sound::changeVolume(int change) {
-    setVolume(_audio->getVolume() + change);
+int Sound::changeVolume(int change) {
+    return setVolume(_audio->getVolume() + change);
 }
 
-void Sound::volumeUp(int change) {
-    changeVolume(change);
+int Sound::volumeUp(int change) {
+    return changeVolume(change);
 }
 
-void Sound::volumeDown(int change) {
-    changeVolume(-change);
+int Sound::volumeDown(int change) {
+    return changeVolume(-change);
 }
 
 void Sound::setSoundFile(char * soundFile) {
