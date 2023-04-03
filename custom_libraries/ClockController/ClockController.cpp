@@ -106,7 +106,7 @@ void ClockController::displayLoading() {
     _state = cs_loading;
     _animFrame = 0;
     _animTimer = millis();
-    writeDigitsRaw(LOADING_SCREENS_CLOCKWISE[_animFrame]);
+    writeDigitsRaw(LOADING_SCREEN);
 }
 
 void ClockController::displayIP(IPAddress ip) {
