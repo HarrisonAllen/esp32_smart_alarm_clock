@@ -1,0 +1,7 @@
+nOOds KEYWORD1
+begin KEYWORD2
+setBrightness KEYWORD2
+changeBrightness KEYWORD2
+brightnessUp KEYWORD2
+brightnessDown KEYWORD2
+getBrightness KEYWORD2
