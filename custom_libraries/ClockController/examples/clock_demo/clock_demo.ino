@@ -20,7 +20,7 @@ void setup() {
 
     clockController.begin();
     loopTimer = millis();
-    clockController.displayLoading();
+    clockController.displayMessage("HELO", 5000);
 }
 
 void loop() {
@@ -40,6 +40,9 @@ void loop() {
                 clockController.displayIP(IPAddress(testIP));
                 break;
             case cs_ip:
+                // Shouldn't get here
+                break;
+            case cs_message:
                 // Shouldn't get here
                 break;
             case cs_time:

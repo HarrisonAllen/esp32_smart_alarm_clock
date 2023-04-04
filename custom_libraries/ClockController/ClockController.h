@@ -26,6 +26,7 @@ enum ClockState {
     cs_init,
     cs_loading,
     cs_error,
+    cs_message,
     cs_time,
     cs_ip
 };
@@ -33,7 +34,7 @@ enum ClockState {
 class ClockController {
     public:
 
-        ClockController(Adafruit_7segment * clockDisplay, int photocellPin);
+        ClockController(Adafruit_7segment *clockDisplay, int photocellPin);
         void begin();
         void loop();
         void setTime(int hour, int minute, int second, int day);
@@ -42,6 +43,7 @@ class ClockController {
         void displayLoading();
         void displayIP(IPAddress ip);
         void displayError(char *error);
+        void displayMessage(char *message, int duration=1000);
         void writeDigitsRaw(const uint8_t *digits);
         void drawCharArray(const char *characters);
         void drawCharAtPosition(uint8_t position, char character);
@@ -62,6 +64,7 @@ class ClockController {
         int _animFrame;
         IPAddress _ip;
         bool _needsTimeUpdate = true;
+        int _messageDuration;
 };
 
 #endif

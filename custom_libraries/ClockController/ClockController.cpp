@@ -46,6 +46,11 @@ void ClockController::loop() {
         case cs_error:
             // Do nothing
             break;
+        case cs_message:
+            if (millis() - _animTimer > _messageDuration) {
+                _state = cs_time;
+            }
+            break;
         case cs_time:
             if (_update) {
                 displayTime();
@@ -122,6 +127,13 @@ void ClockController::displayIP(IPAddress ip) {
 void ClockController::displayError(char *error) {
     _state = cs_error;
     drawCharArray(error);
+}
+
+void ClockController::displayMessage(char *message, int duration) {
+    _state = cs_message;
+    drawCharArray(message);
+    _animTimer = millis();
+    _messageDuration = duration;
 }
 
 void ClockController::writeDigitsRaw(const uint8_t *digits) {
