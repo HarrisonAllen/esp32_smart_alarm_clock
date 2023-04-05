@@ -50,6 +50,10 @@ class ClockController {
         void updateBrightness();
         uint8_t calculateBrightness(int photocellReading);
         ClockState getState();
+        int getHour();
+        int getMinute();
+        int getSecond();
+        int getDay();
         bool needsTimeUpdate();
     private:
 

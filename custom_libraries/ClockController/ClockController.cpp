@@ -177,6 +177,23 @@ ClockState ClockController::getState() {
     return _state;
 }
 
+int ClockController::getHour() {
+    return _hour;
+}
+
+int ClockController::getMinute() {
+    return _minute;
+}
+
+int ClockController::getSecond() {
+    return _second;
+}
+
+int ClockController::getDay() {
+    return _day;
+}
+
+
 bool ClockController::needsTimeUpdate() {
     return _needsTimeUpdate;
 }
