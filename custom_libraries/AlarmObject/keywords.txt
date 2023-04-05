@@ -1,0 +1,12 @@
+AlarmObject KEYWORD1
+setAlarm KEYWORD2
+setTime KEYWORD2
+setDays KEYWORD2
+setDays KEYWORD2
+setSnooze KEYWORD2
+setPlayGame KEYWORD2
+setLightDuration KEYWORD2
+setAlarmSound KEYWORD2
+setEnabled KEYWORD2
+setDeleteAfter KEYWORD2
+checkTime KEYWORD2
