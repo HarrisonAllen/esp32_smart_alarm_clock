@@ -54,12 +54,13 @@ class ClockController {
         int getMinute();
         int getSecond();
         int getDay();
+        String generateDisplayTime(bool includeSeconds=false);
         bool needsTimeUpdate();
     private:
 
         Adafruit_7segment *_clockDisplay;
         int _hour, _minute, _second, _day;
-        int _displayHour, _displayValue;
+        int _displayHour, _displayValue, _displayAm;
         long _timer, _animTimer;
         int _photocellPin;
         uint8_t _brightness;
@@ -69,6 +70,7 @@ class ClockController {
         IPAddress _ip;
         bool _needsTimeUpdate = true;
         int _messageDuration;
+        char _displayTime[30];
 };
 
 #endif

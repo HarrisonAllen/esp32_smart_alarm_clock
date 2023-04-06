@@ -90,21 +90,11 @@ void ClockController::ignoreTimeUpdate() {
 
 void ClockController::displayTime() {
     _state = cs_time;
-    bool am = true;
-    _displayHour = _hour;
-    if (_displayHour >= 12) {
-        _displayHour -= 12;
-        am = false;
-    }
-    if (_displayHour == 0) {
-        _displayHour = 12;
-    }
-    _displayValue = _displayHour * 100 + _minute;
-
-    Serial.printf("%02d:%02d:%02d %s - Day %d\n", _displayHour, _minute, _second, am ? "AM" : "PM", _day);
+    generateDisplayTime(true);
+    Serial.println(_displayTime);
     _clockDisplay->print(_displayValue, DEC);
 
-    _clockDisplay->writeDigitRaw(2, (am ? 0x04 : 0x08) | ((_second % 2 == 0) ? 0x02 : 0x00));
+    _clockDisplay->writeDigitRaw(2, (_displayAm ? 0x04 : 0x08) | ((_second % 2 == 0) ? 0x02 : 0x00));
     _clockDisplay->writeDisplay();
 }
 
@@ -193,6 +183,24 @@ int ClockController::getDay() {
     return _day;
 }
 
+String ClockController::generateDisplayTime(bool includeSeconds) {
+    _displayAm = true;
+    _displayHour = _hour;
+    if (_displayHour >= 12) {
+        _displayHour -= 12;
+        _displayAm = false;
+    }
+    if (_displayHour == 0) {
+        _displayHour = 12;
+    }
+    _displayValue = _displayHour * 100 + _minute;
+    if (includeSeconds) {
+        sprintf(_displayTime, "%02d:%02d:%02d %s", _displayHour, _minute, _second, _displayAm ? "AM" : "PM");
+    } else {
+        sprintf(_displayTime, "%02d:%02d %s", _displayHour, _minute, _displayAm ? "AM" : "PM");
+    }
+    return String(_displayTime);
+}
 
 bool ClockController::needsTimeUpdate() {
     return _needsTimeUpdate;
