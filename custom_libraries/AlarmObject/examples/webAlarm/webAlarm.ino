@@ -31,12 +31,12 @@ void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
 AsyncWebServer server(80);
-const char* PARAM_INPUT_1 = "alarm_input";
-const char* PARAM_INPUT_2 = "alarm_enabled";
-bool alarmUpdated;
+const char* PARAM_ALARM_INPUT = "alarm_input";
+const char* PARAM_ALARM_ENABLED = "alarm_enabled";
 
 // String processor for webpage
 char placeholderCharArray[15];
+bool alarmUpdated;
 String processor(const String& var){
   if (var == "TIME_STRING"){
     return clockController.generateDisplayTime();
@@ -112,25 +112,25 @@ void setup() {
 
     // Initialize server
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SD, "/webserver/alarm.html", "text/html", false, processor);
+        request->redirect("/alarm");
+    });
+    server.on("/alarm", HTTP_GET, [](AsyncWebServerRequest *request){
+        if (request->params() == 0) {
+            request->send(SD, "/webserver/alarm.html", "text/html", false, processor);
+        } else { 
+            if (request->hasParam(PARAM_ALARM_INPUT)) {
+                setAlarm(request->getParam(PARAM_ALARM_INPUT)->value());
+                if (request->hasParam(PARAM_ALARM_ENABLED)) {
+                    setAlarmEnabled(request->getParam(PARAM_ALARM_ENABLED)->value());
+                } else {
+                    setAlarmEnabled("false");
+                }
+                alarmUpdated = true;
+                request->redirect("/alarm");
+            }
+        }
     });
     server.serveStatic("/", SD, "/webserver/");
-
-    // Receive an HTTP GET request at <ESP_IP>/get?alarm_input=<time>&alarm_enabled=<bool>
-    server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-        // GET alarm_input value on <ESP_IP>/get?alarm_input=<time>
-        if (request->hasParam(PARAM_INPUT_1)) {
-            setAlarm(request->getParam(PARAM_INPUT_1)->value());
-        }
-        // GET alarm_enabled value on <ESP_IP>/get?alarm_enabled=<bool>
-        if (request->hasParam(PARAM_INPUT_2)) {
-            setAlarmEnabled(request->getParam(PARAM_INPUT_2)->value());
-        } else {
-            setAlarmEnabled("false");
-        }
-        alarmUpdated = true;
-        request->redirect("/");
-    });
     server.onNotFound(notFound);
     server.begin();
 }
@@ -181,16 +181,6 @@ void setAlarm(String alarmString) {
     Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
 }
 
-void setAlarmEnabled(String alarmEnabledString) {
-    Serial.print("Alarm enable status: ");
-    if (alarmEnabledString == "true") {
-        Serial.println("Enabled");
-    } else {
-        Serial.println("Disabled");
-    }
-    alarmObject.setEnabled(alarmEnabledString == "true");
-}
-
 void setAlarm(int minuteOffset) {
     int alarmMinute = clockController.getMinute() + minuteOffset;
     int alarmHour = clockController.getHour();
@@ -204,6 +194,16 @@ void setAlarm(int minuteOffset) {
     alarmObject.setTime(alarmHour, alarmMinute);
     alarmObject.setEnabled(true);
     Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
+}
+
+void setAlarmEnabled(String alarmEnabledString) {
+    Serial.print("Alarm enable status: ");
+    if (alarmEnabledString == "true") {
+        Serial.println("Enabled");
+    } else {
+        Serial.println("Disabled");
+    }
+    alarmObject.setEnabled(alarmEnabledString == "true");
 }
 
 void playAlarm() {

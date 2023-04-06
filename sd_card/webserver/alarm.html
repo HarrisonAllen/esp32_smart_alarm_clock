@@ -9,7 +9,7 @@
     %ALARM_UPDATE%
     <h2>Current Time: %TIME_STRING%</h2>
     <h2>Alarm:</h2>
-    <form action="/get">
+    <form action="/alarm", method="get">
         Time: <input type="time" name="alarm_input" value="%ALARM_HOUR%:%ALARM_MINUTE%" required><br>
         Enabled: <input type="checkbox" name="alarm_enabled" value="true" %ALARM_ENABLED%><br><br>
         <input type="submit" value="Submit">
