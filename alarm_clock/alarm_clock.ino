@@ -1,6 +1,4 @@
 // TODO:
-// - Add some files, especially for web server
-// - Implement websockets!
 // - Implement buttons (also in files)
 // - Implement database
 // - Implement multiple alarms
@@ -58,7 +56,6 @@ Sound sound(&audio);
 #define numKeys 16
 Adafruit_Trellis matrix0 = Adafruit_Trellis();
 Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
-long trellisTimer;
 
 // Local sketch variables
 long wifiTimer;
@@ -127,17 +124,6 @@ void setup() {
 
   // Setup trellis
   trellis.begin(0x71);
-  // Turn on all LEDs
-  for (uint8_t i=0; i<numKeys; i++) {
-    trellis.setLED(i);
-  }
-  trellis.writeDisplay();
-  delay(250);
-  // Turn off all LEDs
-  for (uint8_t i=0; i<numKeys; i++) {
-    trellis.clrLED(i);
-  }
-  trellis.writeDisplay();
 
   // nOOds
   noodsTimer = millis();
@@ -148,20 +134,20 @@ void loop() {
   noodsLoop();
   trellisLoop();
   sound.loop();
-    if (clockController.needsTimeUpdate()) {
-        fetchTime();
+  if (clockController.needsTimeUpdate()) {
+      fetchTime();
+  }
+  if (clockController.getSecond() != lastSecond) {
+    if (clockController.getMinute() != lastMinute) {
+      lastMinute = clockController.getMinute();
+      if (alarmObject._enabled && alarmObject.checkTime(&clockController)) {
+          playAlarm();
+      }
     }
-    if (clockController.getSecond() != lastSecond) {
-        if (clockController.getMinute() != lastMinute) {
-            lastMinute = clockController.getMinute();
-            if (alarmObject._enabled && alarmObject.checkTime(&clockController)) {
-                playAlarm();
-            }
-        }
-        lastSecond = clockController.getSecond();
-        notifyClients(getData());
-    }
-    ws.cleanupClients();
+    lastSecond = clockController.getSecond();
+    notifyClients(getData());
+  }
+  ws.cleanupClients();
 }
 
 void noodsLoop() {
@@ -173,32 +159,6 @@ void noodsLoop() {
 
 uint8_t calculateNoodsBrightness(int photocellReading) {
   return map(photocellReading, 0, MAX_READING, MIN_NOODS_BRIGHTNESS, MAX_NOODS_BRIGHTNESS+1);
-}
-
-void trellisLoop() {
-  if (millis() - trellisTimer > 30) {
-    // If a button was just pressed or released...
-    if (trellis.readSwitches()) {
-      // go through every button
-      for (uint8_t i=0; i<numKeys; i++) {
-        // if it was pressed, turn LED on
-        if (trellis.justPressed(i)) {
-          Serial.print("v"); Serial.println(i);
-          trellis.setLED(i);
-          sound.setVolume(i+5);
-          sound.playOnce("/audio/pop.mp3");
-        } 
-        // if it was released, turn LED off
-        if (trellis.justReleased(i)) {
-          Serial.print("^"); Serial.println(i);
-          trellis.clrLED(i);
-        }
-      }
-      // tell the trellis to set the LEDs we requested
-      trellis.writeDisplay();
-    }
-    trellisTimer = millis();
-  }
 }
 
 void fetchTime() {
