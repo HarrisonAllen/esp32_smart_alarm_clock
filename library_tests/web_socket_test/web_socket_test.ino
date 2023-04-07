@@ -79,6 +79,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
                 sound.stop();
                 alarmPlaying = false;
                 setAlarm(alarmObject._snoozeDuration);
+                notifyClients(getData());
             }
         }
         if (message == "getData") {
@@ -233,6 +234,11 @@ void setAlarmEnabled(String alarmEnabledString) {
         Serial.println("Enabled");
     } else {
         Serial.println("Disabled");
+        if (alarmPlaying) {
+            Serial.println("Stopping alarm");
+            sound.stop();
+            alarmPlaying = false;
+        }
     }
     alarmObject.setEnabled(alarmEnabledString == "true");
 }
