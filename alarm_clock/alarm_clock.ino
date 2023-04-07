@@ -4,6 +4,7 @@
 // - Implement multiple alarms
 // - Add more settings to alarms
 // - Juice up the alarms page
+// - TODO: add an offline mode
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
