@@ -33,6 +33,7 @@ enum TrellisState {
 TrellisState trellisState;
 long trellisTimer;
 int trellisFrame;
+char trellisMessage[5];
 
 void trellisLoop() {
     switch (trellisState) {
@@ -82,9 +83,16 @@ void handleIdleButtons() {
         Serial.println("Displaying IP");
     } else if (trellis.justPressed(T_BTN_B_DOWN)) {
         Serial.println("Turning brightness down");
+        sprintf(trellisMessage, "b %02d", clockController.brightnessDown());
+        clockController.displayMessage(trellisMessage);
     } else if (trellis.justPressed(T_BTN_B_AUTO)) {
         Serial.println("Setting brightness to auto");
+        clockController.setAutoBrightness(true);
+        sprintf(trellisMessage, "b Au");
+        clockController.displayMessage(trellisMessage);
     } else if (trellis.justPressed(T_BTN_B_UP)) {
+        sprintf(trellisMessage, "b %02d", clockController.brightnessUp());
+        clockController.displayMessage(trellisMessage);
         Serial.println("Turning brightness up");
     } else if (trellis.justPressed(T_BTN_V_DOWN)) {
         Serial.println("Turning volume down");
