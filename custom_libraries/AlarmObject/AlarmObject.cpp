@@ -53,6 +53,13 @@ void AlarmObject::setLightDuration(int duration) {
 void AlarmObject::setAlarmSound(char *soundFile) {
     strcpy(_alarmFilename, soundFile);
 }
+void AlarmObject::setEnabled(bool enabled) {
+    _enabled = enabled;
+}
+
+void AlarmObject::setDeleteAfter(bool deleteAfter) {
+    _deleteAfter = deleteAfter;
+}
 
 bool AlarmObject::checkTime(ClockController *clockController) {
     return (_hour == clockController->getHour()
@@ -60,11 +67,8 @@ bool AlarmObject::checkTime(ClockController *clockController) {
             && (_days & (1 << clockController->getDay())));
 }
 
-void AlarmObject::setEnabled(bool enabled) {
-    _enabled = enabled;
-}
-
-void AlarmObject::setDeleteAfter(bool deleteAfter) {
-    _deleteAfter = deleteAfter;
+String AlarmObject::generateDisplayAlarm() {
+    sprintf(_displayAlarm, "%02d:%02d", _hour, _minute);
+    return String(_displayAlarm);
 }
 

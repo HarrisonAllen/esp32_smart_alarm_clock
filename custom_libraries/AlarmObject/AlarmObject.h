@@ -37,6 +37,7 @@ class AlarmObject {
         void setEnabled(bool enabled);
         void setDeleteAfter(bool deleteAfter);
         bool checkTime(ClockController *clockController);
+        String generateDisplayAlarm();
         // Variables
         int _hour, _minute;
         uint8_t _days = 0b01111111;
@@ -45,6 +46,7 @@ class AlarmObject {
         int _lightDuration = 10;
         char _alarmFilename[100] = "/audio/alarm.mp3";
         bool _enabled, _deleteAfter;
+        char _displayAlarm[30];
 };
 
 
