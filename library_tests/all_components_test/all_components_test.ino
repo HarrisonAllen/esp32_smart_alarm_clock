@@ -304,6 +304,7 @@ void setAlarm(String alarmString) {
     alarmHour = alarmString.substring(0, 2).toInt();
     alarmMinute = alarmString.substring(3).toInt();
     alarmObject.setTime(alarmHour, alarmMinute);
+    alarmObject.setEnabled(true);
     Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
 }
 
