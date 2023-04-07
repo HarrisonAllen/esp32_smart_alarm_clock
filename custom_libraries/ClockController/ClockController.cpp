@@ -181,7 +181,7 @@ int ClockController::brightnessUp(int change) {
 }
 
 int ClockController::brightnessDown(int change) {
-    returnchangeBrightness(-change);
+    return changeBrightness(-change);
 }
 
 void ClockController::setAutoBrightness(bool autoBrightness) {
