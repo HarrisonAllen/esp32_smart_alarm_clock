@@ -1,4 +1,11 @@
-
+// TODO:
+// - Add some files, especially for web server
+// - Implement websockets!
+// - Implement buttons (also in files)
+// - Implement database
+// - Implement multiple alarms
+// - Add more settings to alarms
+// - Juice up the alarms page
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -15,6 +22,7 @@
 #include "Adafruit_Trellis.h"
 #include "SD.h"
 #include "FS.h"
+#include <Arduino_JSON.h>
 
 // Wifi credentials
 const char* ssid     = "Cozy Cove";
@@ -55,43 +63,89 @@ long trellisTimer;
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
+// Create a WebSocket object
+AsyncWebSocket ws("/ws");
 void notFound(AsyncWebServerRequest *request) {
     Serial.println("Uh oh, 404 error!");
     request->send(SD, "/webserver/404.html", "text/html");
-}
-const char* PARAM_ALARM_INPUT = "alarm_input";
-const char* PARAM_ALARM_ENABLED = "alarm_enabled";
-
-// String processor for webpage
-char placeholderCharArray[15];
-bool alarmUpdated;
-String processor(const String& var){
-  if (var == "TIME_STRING"){
-    return clockController.generateDisplayTime();
-  } else if (var == "ALARM_HOUR"){
-    sprintf(placeholderCharArray, "%02d", alarmObject._hour);
-    return String(placeholderCharArray);
-  } else if (var == "ALARM_MINUTE"){
-    sprintf(placeholderCharArray, "%02d", alarmObject._minute);
-    return String(placeholderCharArray);
-  } else if (var == "ALARM_ENABLED") {
-    sprintf(placeholderCharArray, "%s", alarmObject._enabled ? "checked" : "");
-    return String(placeholderCharArray);
-  } else if (var == "ALARM_UPDATE") {
-      if (alarmUpdated) {
-          alarmUpdated = false;
-          return String("<p style=\"color:green\">Alarm successfully updated!</p>");
-      }
-      return String();
-  }
-  return String();
 }
 
 // Local sketch variables
 long wifiTimer;
 int hour, minute, second, day;
-int lastMinute;
+int lastMinute, lastSecond;
 bool alarmPlaying;
+String message = "";
+
+// Json variable to hold data
+JSONVar jsonData;
+String getData() {
+    jsonData["currentTime"] = clockController.generateDisplayTime(true);
+    jsonData["alarmTime"] = alarmObject.generateDisplayAlarm();
+    jsonData["alarmEnabled"] = alarmObject._enabled ? "true" : "false";
+    jsonData["alarmActive"] = alarmPlaying ? "true" : "false";
+
+    String jsonString = JSON.stringify(jsonData);
+    return jsonString;
+}
+
+void notifyClients(String dataString) {
+    ws.textAll(dataString);
+}
+
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
+    AwsFrameInfo *info = (AwsFrameInfo*)arg;
+    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+        data[len] = 0;
+        message = (char*)data;
+        Serial.println("Received: " + message);
+        if (message[0] == 'a') {
+            Serial.println("New alarm time: " + message.substring(1));
+            setAlarm(message.substring(1));
+            notifyClients(getData());
+        }
+        if (message[0] == 'e') {
+            Serial.println("Alarm enabled: " + message.substring(1));
+            setAlarmEnabled(message.substring(1));
+            notifyClients(getData());
+        }
+        if (message[0] == 's') {
+            Serial.println("Snooze received");
+            if (alarmPlaying) {
+                Serial.println("Snoozing alarm");
+                sound.stop();
+                alarmPlaying = false;
+                setAlarm(alarmObject._snoozeDuration);
+                notifyClients(getData());
+            }
+        }
+        if (message == "getData") {
+            notifyClients(getData());
+        }
+    }
+}
+
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            Serial.printf("WebSocket client #%u disconnected\n", client->id());
+            break;
+        case WS_EVT_DATA:
+            handleWebSocketMessage(arg, data, len);
+            break;
+        case WS_EVT_PONG:
+        case WS_EVT_ERROR:
+            break;
+    }
+}
+
+void initWebSocket() {
+    ws.onEvent(onEvent);
+    server.addHandler(&ws);
+}
 
 void setup() {
   // Initialize Serial Monitor
@@ -135,28 +189,17 @@ void setup() {
   fetchTime();
   lastMinute = clockController.getMinute();
 
+  // Initialize websocket
+  initWebSocket();
+  
   // Serve Webpage
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SD, "/webserver/index.html", "text/html");
   });
-  // Receive an HTTP GET request at <ESP_IP>/alarm/get?alarm_input=<time>&alarm_enabled=<bool>
   server.on("/alarm", HTTP_GET, [](AsyncWebServerRequest *request){
-    if (request->params() == 0) {
-        request->send(SD, "/webserver/alarm.html", "text/html", false, processor);
-    } else { 
-        if (request->hasParam(PARAM_ALARM_INPUT)) {
-            setAlarm(request->getParam(PARAM_ALARM_INPUT)->value());
-            if (request->hasParam(PARAM_ALARM_ENABLED)) {
-                setAlarmEnabled(request->getParam(PARAM_ALARM_ENABLED)->value());
-            } else {
-                setAlarmEnabled("false");
-            }
-            alarmUpdated = true;
-            request->redirect("/alarm");
-        }
-    }
+    request->send(SD, "/webserver/alarm.html", "text/html");
   });
-  server.serveStatic("/", SD, "/webserver/");
+  server.serveStatic("/", SD, "/webserver/static/");
   server.onNotFound(notFound);
   server.begin();
 
@@ -189,19 +232,17 @@ void loop() {
     if (clockController.needsTimeUpdate()) {
         fetchTime();
     }
-    if (clockController.getMinute() != lastMinute) {
-        Serial.printf("%d -> %d\n", clockController.getMinute(), lastMinute);
-        lastMinute = clockController.getMinute();
-        if (alarmPlaying) {
-            Serial.println("Snoozing alarm");
-            sound.stop();
-            alarmPlaying = false;
-            setAlarm(alarmObject._snoozeDuration);
+    if (clockController.getSecond() != lastSecond) {
+        if (clockController.getMinute() != lastMinute) {
+            lastMinute = clockController.getMinute();
+            if (alarmObject._enabled && alarmObject.checkTime(&clockController)) {
+                playAlarm();
+            }
         }
-        if (alarmObject._enabled && alarmObject.checkTime(&clockController)) {
-            playAlarm();
-        }
+        lastSecond = clockController.getSecond();
+        notifyClients(getData());
     }
+    ws.cleanupClients();
 }
 
 void noodsLoop() {
@@ -287,6 +328,11 @@ void setAlarmEnabled(String alarmEnabledString) {
         Serial.println("Enabled");
     } else {
         Serial.println("Disabled");
+        if (alarmPlaying) {
+            Serial.println("Stopping alarm");
+            sound.stop();
+            alarmPlaying = false;
+        }
     }
     alarmObject.setEnabled(alarmEnabledString == "true");
 }
@@ -295,7 +341,7 @@ void playAlarm() {
     Serial.println("Alarm triggered!");
     sound.setSoundFile(alarmObject._alarmFilename);
     sound.setRepeating(true);
-    sound.setVolume(1);
+    sound.setVolume(10);
     sound.play();
     alarmPlaying = true;
 }

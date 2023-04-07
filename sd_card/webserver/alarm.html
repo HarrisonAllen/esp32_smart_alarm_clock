@@ -1,18 +1,21 @@
-<!DOCTYPE HTML><html>
+<!DOCTYPE html>
+<html>
 <head>
+    <title>Alarms - Alarm Clock</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" type="text/css" href="style.css">
-    <link rel="icon"  type="image/png" href="favicon.png">
-    <title>Alarm Setter</title>
 </head>
 <body>
-    %ALARM_UPDATE%
-    <h2>Current Time: %TIME_STRING%</h2>
+    <h2>Current Time: <span id="currentTime"></span></h2>
     <h2>Alarm:</h2>
-    <form action="/alarm", method="get">
-        Time: <input type="time" name="alarm_input" value="%ALARM_HOUR%:%ALARM_MINUTE%" required><br>
-        Enabled: <input type="checkbox" name="alarm_enabled" value="true" %ALARM_ENABLED%><br><br>
-        <input type="submit" value="Submit">
-    </form>
+    <p>
+        <input type="time" onchange="updateAlarmTime(this)" id="alarmTime">
+        <input type="checkbox" onchange="updateAlarmEnabled(this)" id="alarmEnabled">
+    </p>
+    <p>
+        <button onclick="snooze(this)" id="snoozeButton">Snooze</button>
+    </p>
+    <script src="script.js"></script>
 </body>
 </html>
