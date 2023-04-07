@@ -81,42 +81,72 @@ void trellisLoop() {
 void handleIdleButtons() {
     if (trellis.justPressed(T_BTN_IP)) {
         Serial.println("Displaying IP");
-    } else if (trellis.justPressed(T_BTN_B_DOWN)) {
+    } 
+    else if (trellis.justPressed(T_BTN_B_DOWN)) 
+    {
         Serial.println("Turning brightness down");
         sprintf(trellisMessage, "b %02d", clockController.brightnessDown());
         clockController.displayMessage(trellisMessage);
-    } else if (trellis.justPressed(T_BTN_B_AUTO)) {
+    } 
+    else if (trellis.justPressed(T_BTN_B_AUTO)) 
+    {
         Serial.println("Setting brightness to auto");
         clockController.setAutoBrightness(true);
         sprintf(trellisMessage, "b Au");
         clockController.displayMessage(trellisMessage);
-    } else if (trellis.justPressed(T_BTN_B_UP)) {
+    } 
+    else if (trellis.justPressed(T_BTN_B_UP)) 
+    {
         sprintf(trellisMessage, "b %02d", clockController.brightnessUp());
         clockController.displayMessage(trellisMessage);
         Serial.println("Turning brightness up");
-    } else if (trellis.justPressed(T_BTN_V_DOWN)) {
+    } 
+    else if (trellis.justPressed(T_BTN_V_DOWN)) 
+    {
         Serial.println("Turning volume down");
-    } else if (trellis.justPressed(T_BTN_V_UP)) {
+    } 
+    else if (trellis.justPressed(T_BTN_V_UP)) 
+    {
         Serial.println("Turning volume up");
-    } else if (trellis.justPressed(T_BTN_6)) {
+    } 
+    else if (trellis.justPressed(T_BTN_6)) 
+    {
         Serial.println("Button 6 pressed");
-    } else if (trellis.justPressed(T_BTN_7)) {
+    } 
+    else if (trellis.justPressed(T_BTN_7)) 
+    {
         Serial.println("Button 7 pressed");
-    } else if (trellis.justPressed(T_BTN_C_HOUR)) {
+    } 
+    else if (trellis.justPressed(T_BTN_C_HOUR)) 
+    {
         Serial.println("Adjusting clock hour");
-    } else if (trellis.justPressed(T_BTN_C_MIN_10)) {
+    } 
+    else if (trellis.justPressed(T_BTN_C_MIN_10)) 
+    {
         Serial.println("Adjusting clock 10s minute");
-    } else if (trellis.justPressed(T_BTN_C_MIN_01)) {
+    } 
+    else if (trellis.justPressed(T_BTN_C_MIN_01)) 
+    {
         Serial.println("Adjusting clock 01s minute");
-    } else if (trellis.justPressed(T_BTN_C_OK)) {
+    } 
+    else if (trellis.justPressed(T_BTN_C_OK)) 
+    {
         Serial.println("Finishing clock edit");
-    } else if (trellis.justPressed(T_BTN_A_HOUR)) {
+    } 
+    else if (trellis.justPressed(T_BTN_A_HOUR)) 
+    {
         Serial.println("Adjusting alarm hour");
-    } else if (trellis.justPressed(T_BTN_A_MIN_10)) {
+    } 
+    else if (trellis.justPressed(T_BTN_A_MIN_10)) 
+    {
         Serial.println("Adjusting alarm 10s minute");
-    } else if (trellis.justPressed(T_BTN_A_MIN_01)) {
+    } 
+    else if (trellis.justPressed(T_BTN_A_MIN_01)) 
+    {
         Serial.println("Adjusting alarm 01s minute");
-    } else if (trellis.justPressed(T_BTN_A_OK)) {
+    } 
+    else if (trellis.justPressed(T_BTN_A_OK)) 
+    {
         Serial.println("Finishing alarm edit");
     }
     // go through every button
