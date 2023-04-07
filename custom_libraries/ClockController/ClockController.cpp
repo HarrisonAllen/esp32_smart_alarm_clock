@@ -150,7 +150,9 @@ void ClockController::drawCharAtPosition(uint8_t position, char character) {
 }
 
 void ClockController::updateBrightness() {
-    _brightness = calculateBrightness(analogRead(_photocellPin));
+    if (_autoBrightness) {
+        _brightness = calculateBrightness(analogRead(_photocellPin));
+    }
     _clockDisplay->setBrightness(_brightness);
     _clockDisplay->writeDisplay();
 }
@@ -162,6 +164,30 @@ uint8_t ClockController::calculateBrightness(int photocellReading) {
         return map(photocellReading, MIN_READING, MAX_READING, MIN_CLOCK_BRIGHTNESS, MAX_CLOCK_BRIGHTNESS+1);
     }
 }
+
+int ClockController::setBrightness(int brightness) {
+    _brightness = constrain(brightness, MIN_CLOCK_BRIGHTNESS, MAX_CLOCK_BRIGHTNESS);
+    _autoBrightness = false;
+    updateBrightness();
+    return _brightness;
+}
+
+int ClockController::changeBrightness(int change) {
+    return setBrightness(_brightness + change);
+}
+
+int ClockController::brightnessUp(int change) {
+    return changeBrightness(change);
+}
+
+int ClockController::brightnessDown(int change) {
+    returnchangeBrightness(-change);
+}
+
+void ClockController::setAutoBrightness(bool autoBrightness) {
+    _autoBrightness = autoBrightness;
+}
+
 
 ClockState ClockController::getState() {
     return _state;

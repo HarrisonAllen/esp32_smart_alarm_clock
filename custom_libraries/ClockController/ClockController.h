@@ -49,6 +49,11 @@ class ClockController {
         void drawCharAtPosition(uint8_t position, char character);
         void updateBrightness();
         uint8_t calculateBrightness(int photocellReading);
+        int setBrightness(int brightness);
+        int changeBrightness(int change);
+        int brightnessUp(int change = 1);
+        int brightnessDown(int change = 1);
+        void setAutoBrightness(bool autoBrightness);
         ClockState getState();
         int getHour();
         int getMinute();
@@ -71,6 +76,7 @@ class ClockController {
         bool _needsTimeUpdate = true;
         int _messageDuration;
         char _displayTime[30];
+        bool _autoBrightness = true;
 };
 
 #endif
