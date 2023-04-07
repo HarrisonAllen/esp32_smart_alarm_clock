@@ -61,6 +61,10 @@ void AlarmObject::setDeleteAfter(bool deleteAfter) {
     _deleteAfter = deleteAfter;
 }
 
+void AlarmObject::setAlarmPlaying(bool alarmPlaying) {
+    _alarmPlaying = alarmPlaying;
+}
+
 bool AlarmObject::checkTime(ClockController *clockController) {
     return (_hour == clockController->getHour()
             && _minute == clockController->getMinute()
