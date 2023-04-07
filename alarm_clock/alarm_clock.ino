@@ -212,6 +212,7 @@ void setAlarmEnabled(String alarmEnabledString) {
             Serial.println("Stopping alarm");
             sound.stop();
             alarmObject._alarmPlaying = false;
+            setTrellisAlarmActive(false);
         }
     }
     alarmObject.setEnabled(alarmEnabledString == "true");
@@ -224,4 +225,15 @@ void playAlarm() {
     sound.setVolume(10);
     sound.play();
     alarmObject._alarmPlaying = true;
+    setTrellisAlarmActive(true);
+}
+
+void snooze() {
+    if (alarmObject._alarmPlaying) {
+        Serial.println("Snoozing alarm");
+        sound.stop();
+        alarmObject._alarmPlaying = false;
+        setAlarm(alarmObject._snoozeDuration);
+        setTrellisAlarmActive(false);
+    }
 }

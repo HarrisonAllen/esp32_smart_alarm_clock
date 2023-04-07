@@ -35,13 +35,8 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         }
         if (message[0] == 's') {
             Serial.println("Snooze received");
-            if (alarmObject._alarmPlaying) {
-                Serial.println("Snoozing alarm");
-                sound.stop();
-                alarmObject._alarmPlaying = false;
-                setAlarm(alarmObject._snoozeDuration);
-                notifyClients(getData());
-            }
+            snooze();
+            notifyClients(getData());
         }
         if (message == "getData") {
             notifyClients(getData());

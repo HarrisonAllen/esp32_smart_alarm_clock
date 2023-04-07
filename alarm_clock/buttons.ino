@@ -54,10 +54,33 @@ void trellisLoop() {
             }
             break;
         case ts_alarm:
+            if (millis() - trellisTimer > 30) {
+                if (trellis.readSwitches()) {
+                    snooze();
+                }
+                trellisTimer = millis();
+            }
             break;
         case ts_game:
             break;
         default:
             break;
+    }
+}
+
+void setTrellisAlarmActive(bool alarmActive) {
+    if (alarmActive) {
+        trellisState = ts_alarm;
+        trellis.clear();
+        for (uint8_t i = 0; i < numKeys; i++) {
+            trellis.setLED(i);
+        }
+        trellis.blinkRate(HT16K33_BLINK_2HZ);
+        trellis.writeDisplay();
+    } else {
+        trellisState = ts_idle;
+        trellis.clear();
+        trellis.blinkRate(HT16K33_BLINK_OFF);
+        trellis.writeDisplay();
     }
 }
