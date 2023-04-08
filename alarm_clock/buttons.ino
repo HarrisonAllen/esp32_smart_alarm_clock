@@ -13,7 +13,7 @@
 #define T_BTN_B_UP 3
 #define T_BTN_V_DOWN 4
 #define T_BTN_V_UP 5
-#define T_BTN_6 6
+#define T_BTN_V_TEST 6
 #define T_BTN_7 7
 #define T_BTN_C_HOUR 8
 #define T_BTN_C_MIN_10 9
@@ -81,6 +81,7 @@ void trellisLoop() {
 void handleIdleButtons() {
     if (trellis.justPressed(T_BTN_IP)) {
         Serial.println("Displaying IP");
+        clockController.displayIP(WiFi.localIP());
     } 
     else if (trellis.justPressed(T_BTN_B_DOWN)) 
     {
@@ -97,21 +98,30 @@ void handleIdleButtons() {
     } 
     else if (trellis.justPressed(T_BTN_B_UP)) 
     {
+        Serial.println("Turning brightness up");
         sprintf(trellisMessage, "b %02d", clockController.brightnessUp());
         clockController.displayMessage(trellisMessage);
-        Serial.println("Turning brightness up");
     } 
     else if (trellis.justPressed(T_BTN_V_DOWN)) 
     {
         Serial.println("Turning volume down");
+        sprintf(trellisMessage, "V %02d", sound.volumeDown());
+        clockController.displayMessage(trellisMessage);
     } 
     else if (trellis.justPressed(T_BTN_V_UP)) 
     {
         Serial.println("Turning volume up");
+        sprintf(trellisMessage, "V %02d", sound.volumeUp());
+        clockController.displayMessage(trellisMessage);
     } 
-    else if (trellis.justPressed(T_BTN_6)) 
+    else if (trellis.justPressed(T_BTN_V_TEST)) 
     {
-        Serial.println("Button 6 pressed");
+        Serial.println("Testing volume");
+        if (sound.isPlaying()) {
+            sound.stop();
+        } else {
+            sound.playOnce(alarmObject._alarmFilename);
+        }
     } 
     else if (trellis.justPressed(T_BTN_7)) 
     {

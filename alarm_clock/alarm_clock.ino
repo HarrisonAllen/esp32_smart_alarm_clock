@@ -223,7 +223,6 @@ void playAlarm() {
     Serial.println("Alarm triggered!");
     sound.setSoundFile(alarmObject._alarmFilename);
     sound.setRepeating(true);
-    sound.setVolume(10);
     sound.play();
     alarmObject._alarmPlaying = true;
     setTrellisAlarmActive(true);
