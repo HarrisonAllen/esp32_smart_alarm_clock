@@ -1,10 +1,14 @@
-// TODO:
-// - Implement buttons (also in files)
-// - Implement database
-// - Implement multiple alarms
-// - Add more settings to alarms
-// - Juice up the alarms page
-// - TODO: add an offline mode
+/* TODO
+    Hard
+    - Store settings into file, and retrieve on boot
+    - Implement buttons
+    - Implement multiple alarms
+    - Add more settings to alarms
+    - Juice up alarms page
+    Soft
+    - Offline mode
+    - Database? May not need anymore
+*/
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -35,7 +39,10 @@ Adafruit_7segment clockDisplay = Adafruit_7segment();
 const int photocellPin = 36;
 ClockController clockController(&clockDisplay, photocellPin);
 
-// Initialize Alarm Object
+// Initialize Alarm Objects
+// TODO: Implement multiple alarms!
+#define NUM_ALARMS 3
+AlarmObject alarms[NUM_ALARMS];
 AlarmObject alarmObject = AlarmObject();
 
 // nOOds fiber
@@ -78,6 +85,11 @@ void setup() {
   // Setup clock controller
   clockController.begin();
   clockController.displayLoading();
+
+  // Setup alarms
+  for (uint8_t i = 0; i < NUM_ALARMS; i++) {
+      alarms[i] == AlarmObject();
+  }
   
   // Start microSD Card
   if(!SD.begin())
