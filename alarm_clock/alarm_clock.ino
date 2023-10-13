@@ -1,7 +1,11 @@
+/*
+How to use:
+- Select "ESP32 Dev Module" as the board type
+- Put the files in sd_card onto the device sd card, that's also where the webpages live
+*/
 /* TODO
     Hard
     - Store settings into file, and retrieve on boot
-    - Implement buttons
     - Implement multiple alarms
     - Add more settings to alarms
     - Juice up alarms page
@@ -17,11 +21,9 @@
 #include <AsyncTCP.h>
 #include <Sound.h>
 #include <ClockController.h>
-#include <nOOds.h>
 #include <AlarmObject.h>
 #include <ESPAsyncWebSrv.h>
 #include "Adafruit_LEDBackpack.h"
-#include "Adafruit_Trellis.h"
 #include "SD.h"
 #include "FS.h"
 #include <Arduino_JSON.h>
@@ -45,12 +47,6 @@ ClockController clockController(&clockDisplay, photocellPin);
 AlarmObject alarms[NUM_ALARMS];
 AlarmObject alarmObject = AlarmObject();
 
-// nOOds fiber
-const int NOODS_PIN = 2;
-nOOds nood(NOODS_PIN);
-const int NOODS_UPDATE_RATE = 25;
-long noodsTimer;
-
 // I2S Connections
 #define I2S_DOUT      27
 #define I2S_BCLK      14
@@ -59,11 +55,6 @@ long noodsTimer;
 // Sound
 Audio audio;
 Sound sound(&audio);
-
-// Trellis
-#define numKeys 16
-Adafruit_Trellis matrix0 = Adafruit_Trellis();
-Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
 
 // Local sketch variables
 long wifiTimer;
@@ -88,7 +79,7 @@ void setup() {
 
   // Setup alarms
   for (uint8_t i = 0; i < NUM_ALARMS; i++) {
-      alarms[i] == AlarmObject();
+      alarms[i] = AlarmObject();
   }
   
   // Start microSD Card
@@ -134,18 +125,10 @@ void setup() {
 
   // Start sound
   sound.begin();
-
-  // Setup trellis
-  trellis.begin(0x71);
-
-  // nOOds
-  noodsTimer = millis();
 }
 
 void loop() {
   clockController.loop();
-  noodsLoop();
-  trellisLoop();
   sound.loop();
   if (clockController.needsTimeUpdate()) {
       fetchTime();
@@ -161,17 +144,6 @@ void loop() {
     notifyClients(getData());
   }
   ws.cleanupClients();
-}
-
-void noodsLoop() {
-  if (millis() - noodsTimer > NOODS_UPDATE_RATE) {
-    nood.setBrightness(calculateNoodsBrightness(analogRead(photocellPin)));
-    noodsTimer = millis();
-  }  
-}
-
-uint8_t calculateNoodsBrightness(int photocellReading) {
-  return map(photocellReading, 0, MAX_READING, MIN_NOODS_BRIGHTNESS, MAX_NOODS_BRIGHTNESS+1);
 }
 
 void fetchTime() {
@@ -225,7 +197,6 @@ void setAlarmEnabled(String alarmEnabledString) {
             Serial.println("Stopping alarm");
             sound.stop();
             alarmObject._alarmPlaying = false;
-            setTrellisAlarmActive(false);
         }
     }
     alarmObject.setEnabled(alarmEnabledString == "true");
@@ -237,7 +208,6 @@ void playAlarm() {
     sound.setRepeating(true);
     sound.play();
     alarmObject._alarmPlaying = true;
-    setTrellisAlarmActive(true);
 }
 
 void snooze() {
@@ -246,6 +216,5 @@ void snooze() {
         sound.stop();
         alarmObject._alarmPlaying = false;
         setAlarm(alarmObject._snoozeDuration);
-        setTrellisAlarmActive(false);
     }
 }
