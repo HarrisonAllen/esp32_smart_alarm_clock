@@ -5,74 +5,79 @@
 #include "AlarmObject.h"
 
 AlarmObject::AlarmObject() {
-    
+
 }
 
-void AlarmObject::setAlarm(int hour, int minute, uint8_t days, int snoozeDuration, int snoozeLimit, bool playGame, int lightDuration, char *soundFile, bool enabled, bool deleteAfter) {
-    setTime(hour, minute);
-    setDays(days);
-    setSnooze(snoozeDuration, snoozeLimit);
-    setPlayGame(playGame);
-    setLightDuration(lightDuration);
-    setAlarmSound(soundFile);
-    setEnabled(enabled);
-    setDeleteAfter(deleteAfter);
+void AlarmObject::init(Sound *sound) {
+    _sound = sound;
 }
 
-void AlarmObject::setTime(int hour, int minute) {
-    _hour = hour;
-    _minute = minute;
+void AlarmObject::setAlarmEnabled(bool enabled) {
+    _alarmEnabled = enabled;
 }
 
-void AlarmObject::setDays(uint8_t days) {
-    _days = days;
+void AlarmObject::setAlarmRepeat(bool repeat) {
+    _repeat = repeat;
 }
 
-void AlarmObject::setDaysArray(bool *days) {
-    _days = 0;
-    for (int i = 0; i < 7; i++) {
-        if (days[i]) {
-            _days |= (1 << i);
-        }
-    }
+void AlarmObject::setAlarmLabel(char *label) {
+    strcpy(_label, label);
 }
 
-void AlarmObject::setSnooze(int duration, int limit) {
+void AlarmObject::setAlarmActive(bool active) {
+    _alarmActive = active;
+}
+
+void AlarmObject::setAlarmTime(int hour, int minute) {
+    _alarmHour = hour;
+    _alarmMinute = minute;
+    setCurrentAlarmTime(hour, minute);
+}
+
+void AlarmObject::setCurrentAlarmTime(int hour, int minute) {
+    _currentAlarmHour = hour;
+    _currentAlarmMinute = minute;
+}
+
+void AlarmObject::setSnoozeEnabled(bool enabled) {
+    _snoozeEnabled = enabled;
+}
+
+void AlarmObject::setSnoozeDuration(int duration) {
     _snoozeDuration = duration;
+}
+
+void AlarmObject::setSnoozeLimit(int limit) {
     _snoozeLimit = limit;
 }
 
-void AlarmObject::setPlayGame(bool play) {
-    _playGame = play;
+void AlarmObject::setSnoozesRemaining(int remaining) {
+    _snoozesRemaining = remaining;
 }
 
-void AlarmObject::setLightDuration(int duration) {
-    _lightDuration = duration;
+void AlarmObject::setSnoozeActive(bool active) {
+    _snoozeActive = active;
 }
 
-void AlarmObject::setAlarmSound(char *soundFile) {
-    strcpy(_alarmFilename, soundFile);
-}
-void AlarmObject::setEnabled(bool enabled) {
-    _enabled = enabled;
+void AlarmObject::setVolumeLevel(int volume) {
+    _volumeLevel = volume;
 }
 
-void AlarmObject::setDeleteAfter(bool deleteAfter) {
-    _deleteAfter = deleteAfter;
+void AlarmObject::setVolumeRamp(bool ramp) {
+    _volumeRamp = ramp;
 }
 
-void AlarmObject::setAlarmPlaying(bool alarmPlaying) {
-    _alarmPlaying = alarmPlaying;
+void AlarmObject::setSoundFile(char *soundFile) {
+    strcpy(_soundFile, soundFile);
 }
 
 bool AlarmObject::checkTime(ClockController *clockController) {
-    return (_hour == clockController->getHour()
-            && _minute == clockController->getMinute()
-            && (_days & (1 << clockController->getDay())));
+    return (_currentAlarmHour == clockController->getHour()
+            && _currentAlarmMinute == clockController->getMinute());
 }
 
 String AlarmObject::generateDisplayAlarm() {
-    sprintf(_displayAlarm, "%02d:%02d", _hour, _minute);
-    return String(_displayAlarm);
+    sprintf(_alarmText, "%02d:%02d", _alarmHour, _alarmMinute);
+    return String(_alarmText);
 }
 

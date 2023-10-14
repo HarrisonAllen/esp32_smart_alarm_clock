@@ -6,8 +6,8 @@ void notFound(AsyncWebServerRequest *request) {
 String getData() {
     jsonData["currentTime"] = clockController.generateDisplayTime(true);
     jsonData["alarmTime"] = alarmObject.generateDisplayAlarm();
-    jsonData["alarmEnabled"] = alarmObject._enabled ? "true" : "false";
-    jsonData["alarmActive"] = alarmObject._alarmPlaying ? "true" : "false";
+    jsonData["alarmEnabled"] = alarmObject._alarmEnabled ? "true" : "false";
+    jsonData["alarmActive"] = alarmObject._alarmActive ? "true" : "false";
 
     String jsonString = JSON.stringify(jsonData);
     return jsonString;

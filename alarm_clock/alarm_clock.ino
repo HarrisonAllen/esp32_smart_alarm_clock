@@ -9,9 +9,6 @@ How to use:
     - Implement multiple alarms
     - Add more settings to alarms
     - Juice up alarms page
-    Soft
-    - Offline mode
-    - Database? May not need anymore
 */
 #include <WiFi.h>
 #include <NTPClient.h>
@@ -41,12 +38,6 @@ Adafruit_7segment clockDisplay = Adafruit_7segment();
 const int photocellPin = 36;
 ClockController clockController(&clockDisplay, photocellPin);
 
-// Initialize Alarm Objects
-// TODO: Implement multiple alarms!
-#define NUM_ALARMS 3
-AlarmObject alarms[NUM_ALARMS];
-AlarmObject alarmObject = AlarmObject();
-
 // I2S Connections
 #define I2S_DOUT      27
 #define I2S_BCLK      14
@@ -55,6 +46,11 @@ AlarmObject alarmObject = AlarmObject();
 // Sound
 Audio audio;
 Sound sound(&audio);
+
+// Initialize Alarm Objects
+#define NUM_ALARMS 3
+AlarmObject alarms[NUM_ALARMS];
+AlarmObject alarmObject = AlarmObject();
 
 // Local sketch variables
 long wifiTimer;
@@ -78,8 +74,9 @@ void setup() {
   clockController.displayLoading();
 
   // Setup alarms
+  alarmObject.init(&sound);
   for (uint8_t i = 0; i < NUM_ALARMS; i++) {
-      alarms[i] = AlarmObject();
+      alarms[i].init(&sound);
   }
   
   // Start microSD Card
@@ -136,7 +133,7 @@ void loop() {
   if (clockController.getSecond() != lastSecond) {
     if (clockController.getMinute() != lastMinute) {
       lastMinute = clockController.getMinute();
-      if (alarmObject._enabled && alarmObject.checkTime(&clockController)) {
+      if (alarmObject._alarmEnabled && alarmObject.checkTime(&clockController)) {
           playAlarm();
       }
     }
@@ -167,12 +164,12 @@ void setAlarm(String alarmString) {
     int alarmHour, alarmMinute;
     alarmHour = alarmString.substring(0, 2).toInt();
     alarmMinute = alarmString.substring(3).toInt();
-    alarmObject.setTime(alarmHour, alarmMinute);
-    alarmObject.setEnabled(true);
+    alarmObject.setAlarmTime(alarmHour, alarmMinute);
+    alarmObject.setAlarmEnabled(true);
     Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
 }
 
-void setAlarm(int minuteOffset) {
+void snoozeAlarm(int minuteOffset) {
     int alarmMinute = clockController.getMinute() + minuteOffset;
     int alarmHour = clockController.getHour();
     if (alarmMinute >= 60) {
@@ -182,9 +179,9 @@ void setAlarm(int minuteOffset) {
             alarmHour = 0;
         }
     }
-    alarmObject.setTime(alarmHour, alarmMinute);
-    alarmObject.setEnabled(true);
-    Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
+    alarmObject.setCurrentAlarmTime(alarmHour, alarmMinute);
+    alarmObject.setAlarmEnabled(true);
+    Serial.printf("Snooze set for %d:%d\n", alarmHour, alarmMinute);
 }
 
 void setAlarmEnabled(String alarmEnabledString) {
@@ -193,28 +190,28 @@ void setAlarmEnabled(String alarmEnabledString) {
         Serial.println("Enabled");
     } else {
         Serial.println("Disabled");
-        if (alarmObject._alarmPlaying) {
+        if (alarmObject._alarmActive) {
             Serial.println("Stopping alarm");
             sound.stop();
-            alarmObject._alarmPlaying = false;
+            alarmObject._alarmActive = false;
         }
     }
-    alarmObject.setEnabled(alarmEnabledString == "true");
+    alarmObject.setAlarmEnabled(alarmEnabledString == "true");
 }
 
 void playAlarm() {
     Serial.println("Alarm triggered!");
-    sound.setSoundFile(alarmObject._alarmFilename);
+    sound.setSoundFile(alarmObject._soundFile);
     sound.setRepeating(true);
     sound.play();
-    alarmObject._alarmPlaying = true;
+    alarmObject._alarmActive = true;
 }
 
 void snooze() {
-    if (alarmObject._alarmPlaying) {
+    if (alarmObject._alarmActive) {
         Serial.println("Snoozing alarm");
         sound.stop();
-        alarmObject._alarmPlaying = false;
-        setAlarm(alarmObject._snoozeDuration);
+        alarmObject._alarmActive = false;
+        snoozeAlarm(alarmObject._snoozeDuration);
     }
 }
