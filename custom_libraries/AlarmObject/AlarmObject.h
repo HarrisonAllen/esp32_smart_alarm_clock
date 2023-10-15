@@ -38,14 +38,6 @@ class AlarmObject {
         void setVolumeLevel(int volume);
         void setVolumeRamp(bool ramp);
         void setSoundFile(char *soundFile);
-
-        void setSnooze(int duration, int limit);
-        void setPlayGame(bool play);
-        void setLightDuration(int duration);
-        void setAlarmSound(char *soundFile);
-        void setEnabled(bool enabled);
-        void setDeleteAfter(bool deleteAfter);
-        void setAlarmPlaying(bool alarmPlaying);
         bool checkTime(ClockController *clockController);
         String generateDisplayAlarm();
         // Variables

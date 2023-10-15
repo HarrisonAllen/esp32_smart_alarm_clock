@@ -126,6 +126,7 @@ void setup() {
 
 void loop() {
   clockController.loop();
+  alarmObject.loop();
   sound.loop();
   if (clockController.needsTimeUpdate()) {
       fetchTime();
@@ -133,7 +134,8 @@ void loop() {
   if (clockController.getSecond() != lastSecond) {
     if (clockController.getMinute() != lastMinute) {
       lastMinute = clockController.getMinute();
-      if (alarmObject._alarmEnabled && alarmObject.checkTime(&clockController)) {
+      alarmObject.checkAlarm(&clockController);
+      if (alarmObject._alarmEnabled && alarmObject.checkTime()) {
           playAlarm();
       }
     }
@@ -160,13 +162,7 @@ void fetchTime() {
 void setAlarm(String alarmString) {
     Serial.print("Alarm received: ");
     Serial.println(alarmString);
-
-    int alarmHour, alarmMinute;
-    alarmHour = alarmString.substring(0, 2).toInt();
-    alarmMinute = alarmString.substring(3).toInt();
-    alarmObject.setAlarmTime(alarmHour, alarmMinute);
-    alarmObject.setAlarmEnabled(true);
-    Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
+    alarmObject.setAlarmFromString(alarmString);
 }
 
 void snoozeAlarm(int minuteOffset) {

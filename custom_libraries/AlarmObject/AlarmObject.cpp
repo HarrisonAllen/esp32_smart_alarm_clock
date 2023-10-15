@@ -8,12 +8,15 @@ AlarmObject::AlarmObject() {
 
 }
 
+// Setters
+
 void AlarmObject::init(Sound *sound) {
     _sound = sound;
 }
 
 void AlarmObject::setAlarmEnabled(bool enabled) {
     _alarmEnabled = enabled;
+    // Turn off alarm?
 }
 
 void AlarmObject::setAlarmRepeat(bool repeat) {
@@ -32,6 +35,15 @@ void AlarmObject::setAlarmTime(int hour, int minute) {
     _alarmHour = hour;
     _alarmMinute = minute;
     setCurrentAlarmTime(hour, minute);
+}
+
+void AlarmObject::setAlarmFromString(String alarmString) {
+    int alarmHour, alarmMinute;
+    alarmHour = alarmString.substring(0, 2).toInt();
+    alarmMinute = alarmString.substring(3).toInt();
+    setAlarmTime(alarmHour, alarmMinute);
+    setAlarmEnabled(true);
+    Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
 }
 
 void AlarmObject::setCurrentAlarmTime(int hour, int minute) {
@@ -71,9 +83,21 @@ void AlarmObject::setSoundFile(char *soundFile) {
     strcpy(_soundFile, soundFile);
 }
 
+// Do stuff
+
 bool AlarmObject::checkTime(ClockController *clockController) {
     return (_currentAlarmHour == clockController->getHour()
             && _currentAlarmMinute == clockController->getMinute());
+}
+
+void AlarmObject::checkAlarm(ClockController *clockController) {
+    if (checkTime(clockController)) {
+        triggerAlarm();
+    }
+}
+
+void AlarmObject::triggerAlarm() {
+    // 
 }
 
 String AlarmObject::generateDisplayAlarm() {
