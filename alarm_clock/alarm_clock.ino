@@ -74,9 +74,9 @@ void setup() {
   clockController.displayLoading();
 
   // Setup alarms
-  alarmObject.init(&sound);
+  alarmObject.init(&sound, &clockController);
   for (uint8_t i = 0; i < NUM_ALARMS; i++) {
-      alarms[i].init(&sound);
+      alarms[i].init(&sound, &clockController);
   }
   
   // Start microSD Card
@@ -124,25 +124,35 @@ void setup() {
   sound.begin();
 }
 
-void loop() {
-  clockController.loop();
-  alarmObject.loop();
-  sound.loop();
-  if (clockController.needsTimeUpdate()) {
-      fetchTime();
-  }
-  if (clockController.getSecond() != lastSecond) {
-    if (clockController.getMinute() != lastMinute) {
-      lastMinute = clockController.getMinute();
-      alarmObject.checkAlarm(&clockController);
-      if (alarmObject._alarmEnabled && alarmObject.checkTime()) {
-          playAlarm();
-      }
+bool isNewSecond() {
+    if (clockController.getSecond() != lastSecond) {
+        lastSecond = clockController.getSecond();
+        return true;
     }
-    lastSecond = clockController.getSecond();
-    notifyClients(getData());
-  }
-  ws.cleanupClients();
+    return false;
+}
+
+bool isNewMinute() {
+    if (clockController.getMinute() != lastMinute) {
+        lastMinute = clockController.getMinute();
+        return true;
+    }
+    return false;
+}
+
+void loop() {
+    clockController.loop();
+    sound.loop();
+    if (isNewSecond()) {
+        notifyClients(getData());
+    }
+    if (isNewMinute()) {
+        alarmObject.checkAlarm();
+    }
+    if (clockController.needsTimeUpdate()) {
+        fetchTime();
+    }
+    ws.cleanupClients();
 }
 
 void fetchTime() {
@@ -160,54 +170,14 @@ void fetchTime() {
 }
 
 void setAlarm(String alarmString) {
-    Serial.print("Alarm received: ");
-    Serial.println(alarmString);
+    Serial.println("Alarm received: " + alarmString);
     alarmObject.setAlarmFromString(alarmString);
 }
 
-void snoozeAlarm(int minuteOffset) {
-    int alarmMinute = clockController.getMinute() + minuteOffset;
-    int alarmHour = clockController.getHour();
-    if (alarmMinute >= 60) {
-        alarmMinute -= 60;
-        alarmHour += 1;
-        if (alarmHour > 23) {
-            alarmHour = 0;
-        }
-    }
-    alarmObject.setCurrentAlarmTime(alarmHour, alarmMinute);
-    alarmObject.setAlarmEnabled(true);
-    Serial.printf("Snooze set for %d:%d\n", alarmHour, alarmMinute);
-}
-
 void setAlarmEnabled(String alarmEnabledString) {
-    Serial.print("Alarm enable status: ");
-    if (alarmEnabledString == "true") {
-        Serial.println("Enabled");
-    } else {
-        Serial.println("Disabled");
-        if (alarmObject._alarmActive) {
-            Serial.println("Stopping alarm");
-            sound.stop();
-            alarmObject._alarmActive = false;
-        }
-    }
     alarmObject.setAlarmEnabled(alarmEnabledString == "true");
 }
 
-void playAlarm() {
-    Serial.println("Alarm triggered!");
-    sound.setSoundFile(alarmObject._soundFile);
-    sound.setRepeating(true);
-    sound.play();
-    alarmObject._alarmActive = true;
-}
-
 void snooze() {
-    if (alarmObject._alarmActive) {
-        Serial.println("Snoozing alarm");
-        sound.stop();
-        alarmObject._alarmActive = false;
-        snoozeAlarm(alarmObject._snoozeDuration);
-    }
+    alarmObject.snoozeAlarm();
 }

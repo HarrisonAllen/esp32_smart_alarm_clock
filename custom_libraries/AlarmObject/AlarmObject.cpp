@@ -10,12 +10,17 @@ AlarmObject::AlarmObject() {
 
 // Setters
 
-void AlarmObject::init(Sound *sound) {
+void AlarmObject::init(Sound *sound, ClockController *clockController) {
     _sound = sound;
+    _clockController = clockController;
 }
 
 void AlarmObject::setAlarmEnabled(bool enabled) {
+    Serial.printf("Alarm %s\n", (enabled ? "enabled" : "disabled"));
     _alarmEnabled = enabled;
+    if (_alarmActive && enabled) {
+        stopAlarm();
+    }
     // Turn off alarm?
 }
 
@@ -85,23 +90,61 @@ void AlarmObject::setSoundFile(char *soundFile) {
 
 // Do stuff
 
-bool AlarmObject::checkTime(ClockController *clockController) {
-    return (_currentAlarmHour == clockController->getHour()
-            && _currentAlarmMinute == clockController->getMinute());
+bool AlarmObject::checkTime() {
+    return (_currentAlarmHour == _clockController->getHour()
+            && _currentAlarmMinute == _clockController->getMinute());
 }
 
-void AlarmObject::checkAlarm(ClockController *clockController) {
-    if (checkTime(clockController)) {
+void AlarmObject::checkAlarm() {
+    if (checkTime()) {
         triggerAlarm();
     }
 }
 
 void AlarmObject::triggerAlarm() {
-    // 
+    if (_alarmEnabled && !_alarmActive) {
+        Serial.println("Triggering alarm!");
+        startAlarm();
+    }
+}
+
+void AlarmObject::startAlarm() {
+    if (_alarmEnabled && !_alarmActive) {
+        _sound->setSoundFile(_soundFile);
+        _sound->setRepeating(true);
+        _sound->play();
+        _alarmActive = true;
+    }
+}
+
+void AlarmObject::stopAlarm() {
+    _sound->stop();
+    _alarmActive = false;
+}
+
+void AlarmObject::snoozeAlarm() {
+    if (_alarmActive) {
+        stopAlarm();
+        Serial.printf("Snoozing alarm for %d minutes\n");
+        offsetTime(_snoozeDuration, _clockController->getMinute(), _clockController->getHour(), &_currentAlarmMinute, &_currentAlarmHour);
+        Serial.printf("New alarm time: %d:%d\n", _currentAlarmHour, _currentAlarmMinute);
+    }
 }
 
 String AlarmObject::generateDisplayAlarm() {
     sprintf(_alarmText, "%02d:%02d", _alarmHour, _alarmMinute);
     return String(_alarmText);
+}
+
+void AlarmObject::offsetTime(int minuteOffset, int startMinute, int startHour, int *outMinute, int *outHour) {
+    *outMinute = startMinute + minuteOffset;
+    *outHour = startHour;
+    if (*outMinute >= 60) {
+        *outMinute -= 60;
+        *outHour += 1;
+        if (*outHour > 23) {
+            *outHour = 0;
+        }
+    }
 }
 

@@ -19,7 +19,7 @@ class AlarmObject {
     public:
         // Control Functions
         AlarmObject();
-        void init(Sound *sound);
+        void init(Sound *sound, ClockController *clockController);
         // - Info
         void setAlarmEnabled(bool enabled);
         void setAlarmRepeat(bool repeat);
@@ -27,6 +27,7 @@ class AlarmObject {
         void setAlarmActive(bool active);
         // - Time
         void setAlarmTime(int hour, int minute);
+        void setAlarmFromString(String alarmString);
         void setCurrentAlarmTime(int hour, int minute);
         // - Snooze
         void setSnoozeEnabled(bool enabled);
@@ -38,10 +39,19 @@ class AlarmObject {
         void setVolumeLevel(int volume);
         void setVolumeRamp(bool ramp);
         void setSoundFile(char *soundFile);
-        bool checkTime(ClockController *clockController);
+        // - Actions
+        bool checkTime();
+        void checkAlarm();
+        void triggerAlarm();
+        void startAlarm();
+        void stopAlarm();
+        void snoozeAlarm();
         String generateDisplayAlarm();
+        // - Helpers
+        void offsetTime(int minuteOffset, int startMinute, int startHour, int *outMinute, int *outHour);
         // Variables
         Sound *_sound;
+        ClockController *_clockController;
         // - Info
         bool _alarmEnabled = true; // Should alarm go off?
         bool _repeat = true; // Should alarm repeat tomorrow?
