@@ -55,17 +55,17 @@ function snooze(element) {
 
 function onMessage(event) {
     console.log(event.data);
-    var myObj = JSON.parse(event.data);
-    // var keys = Object.keys(myObj);
+    var alarmData = JSON.parse(event.data);
+    // var keys = Object.keys(alarmData);
 
-    document.getElementById("currentTime").innerHTML = myObj["currentTime"];
-    document.getElementById("alarmTime").value = myObj["alarmTime"];
-    document.getElementById("alarmEnabled").checked = myObj["alarmEnabled"] === "true";
-    document.getElementById("snoozeButton").disabled = myObj["alarmActive"] === "false";
+    document.getElementById("currentTime").innerHTML = alarmData["currentTime"];
+    document.getElementById("alarmTime").value = alarmData["alarm"]["alarm"]["time"];
+    document.getElementById("alarmEnabled").checked = alarmData["alarm"]["alarm"]["enabled"] === "true";
+    document.getElementById("snoozeButton").disabled = alarmData["alarm"]["alarm"]["active"] === "false";
 
     // for (var i = 0; i < keys.length; i++){
     //     var key = keys[i];
-    //     document.getElementById(key).innerHTML = myObj[key];
-    //     document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
+    //     document.getElementById(key).innerHTML = alarmData[key];
+    //     document.getElementById("slider"+ (i+1).toString()).value = alarmData[key];
     // }
 }

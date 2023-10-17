@@ -120,12 +120,13 @@ void AlarmObject::startAlarm() {
 void AlarmObject::stopAlarm() {
     _sound->stop();
     _alarmActive = false;
+    _alarmEnabled = _repeat;
 }
 
 void AlarmObject::snoozeAlarm() {
     if (_alarmActive) {
         stopAlarm();
-        Serial.printf("Snoozing alarm for %d minutes\n");
+        Serial.printf("Snoozing alarm for %d minutes\n", _snoozeDuration);
         offsetTime(_snoozeDuration, _clockController->getMinute(), _clockController->getHour(), &_currentAlarmMinute, &_currentAlarmHour);
         Serial.printf("New alarm time: %d:%d\n", _currentAlarmHour, _currentAlarmMinute);
     }
@@ -134,6 +135,23 @@ void AlarmObject::snoozeAlarm() {
 String AlarmObject::generateDisplayAlarm() {
     sprintf(_alarmText, "%02d:%02d", _alarmHour, _alarmMinute);
     return String(_alarmText);
+}
+
+JSONVar AlarmObject::generateJSON(JSONVar baseJSON) {
+    baseJSON["alarm"]["label"] = _label;
+    baseJSON["alarm"]["alarm"]["enabled"] = _alarmEnabled ? "true" : "false";
+    baseJSON["alarm"]["alarm"]["active"] = _alarmActive ? "true" : "false";
+    baseJSON["alarm"]["alarm"]["time"] = generateDisplayAlarm();
+    baseJSON["alarm"]["alarm"]["repeat"] = _repeat ? "true" : "false";
+    baseJSON["alarm"]["snooze"]["enabled"] = _snoozeEnabled ? "true" : "false";
+    baseJSON["alarm"]["snooze"]["active"] = _snoozeActive ? "true" : "false";
+    baseJSON["alarm"]["snooze"]["duration"] = _snoozeDuration;
+    baseJSON["alarm"]["snooze"]["limit"] = _snoozeLimit;
+    baseJSON["alarm"]["snooze"]["remaining"] = _snoozesRemaining;
+    baseJSON["alarm"]["sound"]["volume"] = _volumeLevel;
+    baseJSON["alarm"]["sound"]["ramp"] = _volumeRamp ? "true" : "false";
+    baseJSON["alarm"]["sound"]["file"] = String(_soundFile);
+    return baseJSON;
 }
 
 void AlarmObject::offsetTime(int minuteOffset, int startMinute, int startHour, int *outMinute, int *outHour) {

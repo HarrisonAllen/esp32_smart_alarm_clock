@@ -7,6 +7,7 @@
 #include "Arduino.h"
 #include <ClockController.h>
 #include <Sound.h>
+#include <Arduino_JSON.h>
 
 // initialize alarms like:
 // AlarmObject alarms[numalarms];
@@ -47,6 +48,7 @@ class AlarmObject {
         void stopAlarm();
         void snoozeAlarm();
         String generateDisplayAlarm();
+        JSONVar generateJSON(JSONVar baseJSON);
         // - Helpers
         void offsetTime(int minuteOffset, int startMinute, int startHour, int *outMinute, int *outHour);
         // Variables

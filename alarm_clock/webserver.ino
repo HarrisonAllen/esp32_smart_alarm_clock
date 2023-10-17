@@ -4,12 +4,42 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 String getData() {
+    /*
+    new structure:
+    {
+        "currentTime": clock controller time,
+        "alarms": [
+            {
+                "label": str,
+                "alarm": {
+                    "enabled": bool,
+                    "active": bool,
+                    "time": str,
+                    "repeat": bool
+                }
+                "snooze": {
+                    "enabled": bool,
+                    "active": bool,
+                    "duration": int,
+                    "limit": int,
+                    "remaining": int
+                },
+                "sound": {
+                    "volume": int,
+                    "ramp": bool,
+                    "file": str
+                },
+
+            }
+        ]
+    }
+
+    */
     jsonData["currentTime"] = clockController.generateDisplayTime(true);
-    jsonData["alarmTime"] = alarmObject.generateDisplayAlarm();
-    jsonData["alarmEnabled"] = alarmObject._alarmEnabled ? "true" : "false";
-    jsonData["alarmActive"] = alarmObject._alarmActive ? "true" : "false";
+    jsonData = alarmObject.generateJSON(jsonData);
 
     String jsonString = JSON.stringify(jsonData);
+    Serial.println(jsonString);
     return jsonString;
 }
 
