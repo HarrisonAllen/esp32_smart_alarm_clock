@@ -24,12 +24,13 @@ class AlarmObject {
         // - Info
         void setAlarmEnabled(bool enabled);
         void setAlarmRepeat(bool repeat);
-        void setAlarmLabel(char *label);
+        void setAlarmLabel(String label);
         void setAlarmActive(bool active);
         // - Time
         void setAlarmTime(int hour, int minute);
         void setAlarmFromString(String alarmString);
         void setCurrentAlarmTime(int hour, int minute);
+        void resetAlarmTime();
         // - Snooze
         void setSnoozeEnabled(bool enabled);
         void setSnoozeDuration(int duration);
@@ -37,14 +38,13 @@ class AlarmObject {
         void setSnoozesRemaining(int remaining);
         void setSnoozeActive(bool active);
         // - Sound
-        void setVolumeLevel(int volume);
+        void setVolume(int volume);
         void setVolumeRamp(bool ramp);
-        void setSoundFile(char *soundFile);
+        void setSoundFile(String soundFile);
         // - Actions
         bool checkTime();
         void checkAlarm();
         void triggerAlarm();
-        void startAlarm();
         void stopAlarm();
         void snoozeAlarm();
         String generateDisplayAlarm();
@@ -72,7 +72,7 @@ class AlarmObject {
         int _snoozesRemaining = _snoozeLimit; // Current number of snoozes remaining
         bool _snoozeActive = false; // Are we currently snoozing?
         // - Sound
-        int _volumeLevel = MAX_VOLUME; // Target volume level
+        int _volume = MAX_VOLUME; // Target volume level
         bool _volumeRamp = true; // Should we ramp up to the volume level?
         char _soundFile[100] = "/audio/alarm.mp3";
 };

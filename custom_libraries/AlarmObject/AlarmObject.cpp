@@ -21,15 +21,14 @@ void AlarmObject::setAlarmEnabled(bool enabled) {
     if (_alarmActive && enabled) {
         stopAlarm();
     }
-    // Turn off alarm?
 }
 
 void AlarmObject::setAlarmRepeat(bool repeat) {
     _repeat = repeat;
 }
 
-void AlarmObject::setAlarmLabel(char *label) {
-    strcpy(_label, label);
+void AlarmObject::setAlarmLabel(String label) {
+    label.toCharArray(_label, 99);
 }
 
 void AlarmObject::setAlarmActive(bool active) {
@@ -56,6 +55,10 @@ void AlarmObject::setCurrentAlarmTime(int hour, int minute) {
     _currentAlarmMinute = minute;
 }
 
+void AlarmObject::resetAlarmTime() {
+    setAlarmTime(_alarmHour, _alarmMinute);
+}
+
 void AlarmObject::setSnoozeEnabled(bool enabled) {
     _snoozeEnabled = enabled;
 }
@@ -66,6 +69,7 @@ void AlarmObject::setSnoozeDuration(int duration) {
 
 void AlarmObject::setSnoozeLimit(int limit) {
     _snoozeLimit = limit;
+    setSnoozesRemaining(limit);
 }
 
 void AlarmObject::setSnoozesRemaining(int remaining) {
@@ -76,16 +80,16 @@ void AlarmObject::setSnoozeActive(bool active) {
     _snoozeActive = active;
 }
 
-void AlarmObject::setVolumeLevel(int volume) {
-    _volumeLevel = volume;
+void AlarmObject::setVolume(int volume) {
+    _volume = volume;
 }
 
 void AlarmObject::setVolumeRamp(bool ramp) {
     _volumeRamp = ramp;
 }
 
-void AlarmObject::setSoundFile(char *soundFile) {
-    strcpy(_soundFile, soundFile);
+void AlarmObject::setSoundFile(String soundFile) {
+    soundFile.toCharArray(_soundFile, 99);
 }
 
 // Do stuff
@@ -104,16 +108,12 @@ void AlarmObject::checkAlarm() {
 void AlarmObject::triggerAlarm() {
     if (_alarmEnabled && !_alarmActive) {
         Serial.println("Triggering alarm!");
-        startAlarm();
-    }
-}
-
-void AlarmObject::startAlarm() {
-    if (_alarmEnabled && !_alarmActive) {
         _sound->setSoundFile(_soundFile);
+        _sound->setVolume(_volume);
         _sound->setRepeating(true);
         _sound->play();
         _alarmActive = true;
+        _snoozeActive = false;
     }
 }
 
@@ -121,15 +121,19 @@ void AlarmObject::stopAlarm() {
     _sound->stop();
     _alarmActive = false;
     _alarmEnabled = _repeat;
+    resetAlarmTime();
+    _snoozeActive = false;
+    _snoozesRemaining = _snoozeLimit;
 }
 
 void AlarmObject::snoozeAlarm() {
-    if (_alarmActive) {
-        stopAlarm();
-        Serial.printf("Snoozing alarm for %d minutes\n", _snoozeDuration);
-        offsetTime(_snoozeDuration, _clockController->getMinute(), _clockController->getHour(), &_currentAlarmMinute, &_currentAlarmHour);
-        Serial.printf("New alarm time: %d:%d\n", _currentAlarmHour, _currentAlarmMinute);
-    }
+    _sound->stop();
+    _alarmActive = false;
+    Serial.printf("Snoozing alarm for %d minutes\n", _snoozeDuration);
+    offsetTime(_snoozeDuration, _clockController->getMinute(), _clockController->getHour(), &_currentAlarmMinute, &_currentAlarmHour);
+    Serial.printf("New alarm time: %d:%d\n", _currentAlarmHour, _currentAlarmMinute);
+    _snoozesRemaining--;
+    _snoozeActive = true;
 }
 
 String AlarmObject::generateDisplayAlarm() {
@@ -138,19 +142,21 @@ String AlarmObject::generateDisplayAlarm() {
 }
 
 JSONVar AlarmObject::generateJSON(JSONVar baseJSON) {
-    baseJSON["alarm"]["label"] = _label;
-    baseJSON["alarm"]["alarm"]["enabled"] = _alarmEnabled ? "true" : "false";
-    baseJSON["alarm"]["alarm"]["active"] = _alarmActive ? "true" : "false";
-    baseJSON["alarm"]["alarm"]["time"] = generateDisplayAlarm();
-    baseJSON["alarm"]["alarm"]["repeat"] = _repeat ? "true" : "false";
-    baseJSON["alarm"]["snooze"]["enabled"] = _snoozeEnabled ? "true" : "false";
-    baseJSON["alarm"]["snooze"]["active"] = _snoozeActive ? "true" : "false";
-    baseJSON["alarm"]["snooze"]["duration"] = _snoozeDuration;
-    baseJSON["alarm"]["snooze"]["limit"] = _snoozeLimit;
-    baseJSON["alarm"]["snooze"]["remaining"] = _snoozesRemaining;
-    baseJSON["alarm"]["sound"]["volume"] = _volumeLevel;
-    baseJSON["alarm"]["sound"]["ramp"] = _volumeRamp ? "true" : "false";
-    baseJSON["alarm"]["sound"]["file"] = String(_soundFile);
+    baseJSON["alarm"]["label"] = _label; // html js_rec js_send c_rec
+    baseJSON["alarm"]["alarm"]["enabled"] = _alarmEnabled ? "true" : "false"; // html js_rec js_send c_rec
+    baseJSON["alarm"]["alarm"]["active"] = _alarmActive ? "true" : "false"; // html js_rec !js_send !c_rec
+    baseJSON["alarm"]["alarm"]["time"] = generateDisplayAlarm(); // html js_rec js_send c_rec
+    baseJSON["alarm"]["alarm"]["repeat"] = _repeat ? "true" : "false"; // html js_rec js_send c_rec
+
+    baseJSON["alarm"]["snooze"]["enabled"] = _snoozeEnabled ? "true" : "false"; // html js_rec js_send c_rec
+    baseJSON["alarm"]["snooze"]["active"] = _snoozeActive ? "true" : "false"; // html js_rec !js_send !c_rec
+    baseJSON["alarm"]["snooze"]["duration"] = _snoozeDuration; // html js_rec js_send c_rec
+    baseJSON["alarm"]["snooze"]["limit"] = _snoozeLimit; // html js_rec js_send c_rec
+    baseJSON["alarm"]["snooze"]["remaining"] = _snoozesRemaining; // html js_rec !js_send !js_rec
+
+    baseJSON["alarm"]["sound"]["volume"] = _volume; // html js_rec js_send c_rec
+    baseJSON["alarm"]["sound"]["ramp"] = _volumeRamp ? "true" : "false"; // html js_rec js_send c_rec
+    baseJSON["alarm"]["sound"]["file"] = String(_soundFile); // html js_rec js_send c_rec
     return baseJSON;
 }
 

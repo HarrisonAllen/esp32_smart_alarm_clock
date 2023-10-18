@@ -143,11 +143,9 @@ bool isNewMinute() {
 void loop() {
     clockController.loop();
     sound.loop();
-    if (isNewSecond()) {
-        notifyClients(getData());
-    }
     if (isNewMinute()) {
         alarmObject.checkAlarm();
+        notifyClients(getData());
     }
     if (clockController.needsTimeUpdate()) {
         fetchTime();
@@ -167,17 +165,4 @@ void fetchTime() {
         Serial.println("Failed to fetch time");
         clockController.ignoreTimeUpdate();
     }
-}
-
-void setAlarm(String alarmString) {
-    Serial.println("Alarm received: " + alarmString);
-    alarmObject.setAlarmFromString(alarmString);
-}
-
-void setAlarmEnabled(String alarmEnabledString) {
-    alarmObject.setAlarmEnabled(alarmEnabledString == "true");
-}
-
-void snooze() {
-    alarmObject.snoozeAlarm();
 }
