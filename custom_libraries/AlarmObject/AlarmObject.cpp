@@ -5,15 +5,38 @@
 #include "AlarmObject.h"
 
 AlarmObject::AlarmObject() {
-
+    for (int i = 0; i < NUM_ALARMS; i++) {
+       _alarms = createAlarm(_alarms, i); 
+    }
 }
 
-// Setters
+JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
+    alarmVar[alarmNum]["label"] = "Alarm " + (String)(alarmNum + 1);
+    alarmVar[alarmNum]["hidden"] = "true";
+    alarmVar[alarmNum]["alarm"]["enabled"] = "true";
+    alarmVar[alarmNum]["alarm"]["active"] = "true";
+    alarmVar[alarmNum]["alarm"]["hour"] = 8;
+    alarmVar[alarmNum]["alarm"]["minute"] = 0;
+    alarmVar[alarmNum]["alarm"]["repeat"] = "true";
+
+    alarmVar[alarmNum]["snooze"]["enabled"] = "true";
+    alarmVar[alarmNum]["snooze"]["active"] = "false";
+    alarmVar[alarmNum]["snooze"]["duration"] = 5;
+    alarmVar[alarmNum]["snooze"]["limit"] = 3;
+    alarmVar[alarmNum]["snooze"]["remaining"] = 3;
+
+    alarmVar[alarmNum]["sound"]["volume"] = 5;
+    alarmVar[alarmNum]["sound"]["ramp"] = "false";
+    alarmVar[alarmNum]["sound"]["file"] = "/audio/alarm.mp3";
+    return alarmVar;
+}
 
 void AlarmObject::init(Sound *sound, ClockController *clockController) {
     _sound = sound;
     _clockController = clockController;
 }
+
+// Setters
 
 void AlarmObject::setAlarmEnabled(bool enabled) {
     Serial.printf("Alarm %s\n", (enabled ? "enabled" : "disabled"));
@@ -141,22 +164,26 @@ String AlarmObject::generateDisplayAlarm() {
     return String(_alarmText);
 }
 
-JSONVar AlarmObject::generateJSON(JSONVar baseJSON) {
-    baseJSON["alarm"]["label"] = _label; // html js_rec js_send c_rec
-    baseJSON["alarm"]["alarm"]["enabled"] = _alarmEnabled ? "true" : "false"; // html js_rec js_send c_rec
-    baseJSON["alarm"]["alarm"]["active"] = _alarmActive ? "true" : "false"; // html js_rec !js_send !c_rec
-    baseJSON["alarm"]["alarm"]["time"] = generateDisplayAlarm(); // html js_rec js_send c_rec
-    baseJSON["alarm"]["alarm"]["repeat"] = _repeat ? "true" : "false"; // html js_rec js_send c_rec
+void AlarmObject::parseJSON(JSONVar json) {
+    _alarms = JSON.parse(json);
+}
 
-    baseJSON["alarm"]["snooze"]["enabled"] = _snoozeEnabled ? "true" : "false"; // html js_rec js_send c_rec
-    baseJSON["alarm"]["snooze"]["active"] = _snoozeActive ? "true" : "false"; // html js_rec !js_send !c_rec
-    baseJSON["alarm"]["snooze"]["duration"] = _snoozeDuration; // html js_rec js_send c_rec
-    baseJSON["alarm"]["snooze"]["limit"] = _snoozeLimit; // html js_rec js_send c_rec
+JSONVar AlarmObject::generateJSON(JSONVar baseJSON) {
+    baseJSON["alarm"]["label"] = _label;
+    baseJSON["alarm"]["alarm"]["enabled"] = _alarmEnabled ? "true" : "false";
+    baseJSON["alarm"]["alarm"]["active"] = _alarmActive ? "true" : "false";
+    baseJSON["alarm"]["alarm"]["time"] = generateDisplayAlarm();
+    baseJSON["alarm"]["alarm"]["repeat"] = _repeat ? "true" : "false";
+
+    baseJSON["alarm"]["snooze"]["enabled"] = _snoozeEnabled ? "true" : "false";
+    baseJSON["alarm"]["snooze"]["active"] = _snoozeActive ? "true" : "false";
+    baseJSON["alarm"]["snooze"]["duration"] = _snoozeDuration;
+    baseJSON["alarm"]["snooze"]["limit"] = _snoozeLimit;
     baseJSON["alarm"]["snooze"]["remaining"] = _snoozesRemaining; // html js_rec !js_send !js_rec
 
-    baseJSON["alarm"]["sound"]["volume"] = _volume; // html js_rec js_send c_rec
-    baseJSON["alarm"]["sound"]["ramp"] = _volumeRamp ? "true" : "false"; // html js_rec js_send c_rec
-    baseJSON["alarm"]["sound"]["file"] = String(_soundFile); // html js_rec js_send c_rec
+    baseJSON["alarm"]["sound"]["volume"] = _volume;
+    baseJSON["alarm"]["sound"]["ramp"] = _volumeRamp ? "true" : "false";
+    baseJSON["alarm"]["sound"]["file"] = String(_soundFile);
     return baseJSON;
 }
 

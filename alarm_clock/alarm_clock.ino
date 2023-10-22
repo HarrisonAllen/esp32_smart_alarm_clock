@@ -26,8 +26,10 @@ How to use:
 #include <Arduino_JSON.h>
 
 // Wifi credentials
-const char* ssid     = "Cozy Cove";
-const char* password = "Prickly Mochi 1005";
+// const char* ssid     = "Cozy Cove";
+// const char* password = "Prickly Mochi 1005";
+const char* ssid = "Phony";
+const char* password = "wbjvfkbsj49mf";
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -48,8 +50,6 @@ Audio audio;
 Sound sound(&audio);
 
 // Initialize Alarm Objects
-#define NUM_ALARMS 3
-AlarmObject alarms[NUM_ALARMS];
 AlarmObject alarmObject = AlarmObject();
 
 // Local sketch variables
@@ -75,9 +75,6 @@ void setup() {
 
   // Setup alarms
   alarmObject.init(&sound, &clockController);
-  for (uint8_t i = 0; i < NUM_ALARMS; i++) {
-      alarms[i].init(&sound, &clockController);
-  }
   
   // Start microSD Card
   if(!SD.begin())

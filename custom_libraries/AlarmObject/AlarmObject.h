@@ -9,17 +9,13 @@
 #include <Sound.h>
 #include <Arduino_JSON.h>
 
-// initialize alarms like:
-// AlarmObject alarms[numalarms];
-// (in setup:)
-// for (int i = 0; i < numalarms; i++) {
-//     alarms[i] = AlarmObject();
-// }
+#define NUM_ALARMS 10
 
 class AlarmObject {
     public:
         // Control Functions
         AlarmObject();
+        JSONVar createAlarm(JSONVar alarmVar, int index);
         void init(Sound *sound, ClockController *clockController);
         // - Info
         void setAlarmEnabled(bool enabled);
@@ -48,12 +44,14 @@ class AlarmObject {
         void stopAlarm();
         void snoozeAlarm();
         String generateDisplayAlarm();
+        void parseJSON(JSONVar json);
         JSONVar generateJSON(JSONVar baseJSON);
         // - Helpers
         void offsetTime(int minuteOffset, int startMinute, int startHour, int *outMinute, int *outHour);
         // Variables
         Sound *_sound;
         ClockController *_clockController;
+        JSONVar _alarms;
         // - Info
         bool _alarmEnabled = true; // Should alarm go off?
         bool _repeat = true; // Should alarm repeat tomorrow?
