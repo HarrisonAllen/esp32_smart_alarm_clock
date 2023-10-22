@@ -1,10 +1,15 @@
-// TODO:
-// - Implement buttons (also in files)
-// - Implement database
-// - Implement multiple alarms
-// - Add more settings to alarms
-// - Juice up the alarms page
-// - TODO: add an offline mode
+/*
+How to use:
+- Select "ESP32 Dev Module" as the board type
+- Put the files in sd_card onto the device sd card, that's also where the webpages live
+*/
+/* TODO
+    Hard
+    - Store settings into file, and retrieve on boot
+    - Implement multiple alarms
+    - Add more settings to alarms
+    - Juice up alarms page
+*/
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -13,11 +18,9 @@
 #include <AsyncTCP.h>
 #include <Sound.h>
 #include <ClockController.h>
-#include <nOOds.h>
 #include <AlarmObject.h>
 #include <ESPAsyncWebSrv.h>
 #include "Adafruit_LEDBackpack.h"
-#include "Adafruit_Trellis.h"
 #include "SD.h"
 #include "FS.h"
 #include <Arduino_JSON.h>
@@ -35,15 +38,6 @@ Adafruit_7segment clockDisplay = Adafruit_7segment();
 const int photocellPin = 36;
 ClockController clockController(&clockDisplay, photocellPin);
 
-// Initialize Alarm Object
-AlarmObject alarmObject = AlarmObject();
-
-// nOOds fiber
-const int NOODS_PIN = 2;
-nOOds nood(NOODS_PIN);
-const int NOODS_UPDATE_RATE = 25;
-long noodsTimer;
-
 // I2S Connections
 #define I2S_DOUT      27
 #define I2S_BCLK      14
@@ -53,10 +47,10 @@ long noodsTimer;
 Audio audio;
 Sound sound(&audio);
 
-// Trellis
-#define numKeys 16
-Adafruit_Trellis matrix0 = Adafruit_Trellis();
-Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
+// Initialize Alarm Objects
+#define NUM_ALARMS 3
+AlarmObject alarms[NUM_ALARMS];
+AlarmObject alarmObject = AlarmObject();
 
 // Local sketch variables
 long wifiTimer;
@@ -78,6 +72,12 @@ void setup() {
   // Setup clock controller
   clockController.begin();
   clockController.displayLoading();
+
+  // Setup alarms
+  alarmObject.init(&sound, &clockController);
+  for (uint8_t i = 0; i < NUM_ALARMS; i++) {
+      alarms[i].init(&sound, &clockController);
+  }
   
   // Start microSD Card
   if(!SD.begin())
@@ -122,44 +122,35 @@ void setup() {
 
   // Start sound
   sound.begin();
+}
 
-  // Setup trellis
-  trellis.begin(0x71);
+bool isNewSecond() {
+    if (clockController.getSecond() != lastSecond) {
+        lastSecond = clockController.getSecond();
+        return true;
+    }
+    return false;
+}
 
-  // nOOds
-  noodsTimer = millis();
+bool isNewMinute() {
+    if (clockController.getMinute() != lastMinute) {
+        lastMinute = clockController.getMinute();
+        return true;
+    }
+    return false;
 }
 
 void loop() {
-  clockController.loop();
-  noodsLoop();
-  trellisLoop();
-  sound.loop();
-  if (clockController.needsTimeUpdate()) {
-      fetchTime();
-  }
-  if (clockController.getSecond() != lastSecond) {
-    if (clockController.getMinute() != lastMinute) {
-      lastMinute = clockController.getMinute();
-      if (alarmObject._enabled && alarmObject.checkTime(&clockController)) {
-          playAlarm();
-      }
+    clockController.loop();
+    sound.loop();
+    if (isNewMinute()) {
+        alarmObject.checkAlarm();
+        notifyClients(getData());
     }
-    lastSecond = clockController.getSecond();
-    notifyClients(getData());
-  }
-  ws.cleanupClients();
-}
-
-void noodsLoop() {
-  if (millis() - noodsTimer > NOODS_UPDATE_RATE) {
-    nood.setBrightness(calculateNoodsBrightness(analogRead(photocellPin)));
-    noodsTimer = millis();
-  }  
-}
-
-uint8_t calculateNoodsBrightness(int photocellReading) {
-  return map(photocellReading, 0, MAX_READING, MIN_NOODS_BRIGHTNESS, MAX_NOODS_BRIGHTNESS+1);
+    if (clockController.needsTimeUpdate()) {
+        fetchTime();
+    }
+    ws.cleanupClients();
 }
 
 void fetchTime() {
@@ -173,67 +164,5 @@ void fetchTime() {
     } else {
         Serial.println("Failed to fetch time");
         clockController.ignoreTimeUpdate();
-    }
-}
-
-void setAlarm(String alarmString) {
-    Serial.print("Alarm received: ");
-    Serial.println(alarmString);
-
-    int alarmHour, alarmMinute;
-    alarmHour = alarmString.substring(0, 2).toInt();
-    alarmMinute = alarmString.substring(3).toInt();
-    alarmObject.setTime(alarmHour, alarmMinute);
-    alarmObject.setEnabled(true);
-    Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
-}
-
-void setAlarm(int minuteOffset) {
-    int alarmMinute = clockController.getMinute() + minuteOffset;
-    int alarmHour = clockController.getHour();
-    if (alarmMinute >= 60) {
-        alarmMinute -= 60;
-        alarmHour += 1;
-        if (alarmHour > 23) {
-            alarmHour = 0;
-        }
-    }
-    alarmObject.setTime(alarmHour, alarmMinute);
-    alarmObject.setEnabled(true);
-    Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
-}
-
-void setAlarmEnabled(String alarmEnabledString) {
-    Serial.print("Alarm enable status: ");
-    if (alarmEnabledString == "true") {
-        Serial.println("Enabled");
-    } else {
-        Serial.println("Disabled");
-        if (alarmObject._alarmPlaying) {
-            Serial.println("Stopping alarm");
-            sound.stop();
-            alarmObject._alarmPlaying = false;
-            setTrellisAlarmActive(false);
-        }
-    }
-    alarmObject.setEnabled(alarmEnabledString == "true");
-}
-
-void playAlarm() {
-    Serial.println("Alarm triggered!");
-    sound.setSoundFile(alarmObject._alarmFilename);
-    sound.setRepeating(true);
-    sound.play();
-    alarmObject._alarmPlaying = true;
-    setTrellisAlarmActive(true);
-}
-
-void snooze() {
-    if (alarmObject._alarmPlaying) {
-        Serial.println("Snoozing alarm");
-        sound.stop();
-        alarmObject._alarmPlaying = false;
-        setAlarm(alarmObject._snoozeDuration);
-        setTrellisAlarmActive(false);
     }
 }

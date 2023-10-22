@@ -5,11 +5,10 @@ void notFound(AsyncWebServerRequest *request) {
 
 String getData() {
     jsonData["currentTime"] = clockController.generateDisplayTime(true);
-    jsonData["alarmTime"] = alarmObject.generateDisplayAlarm();
-    jsonData["alarmEnabled"] = alarmObject._enabled ? "true" : "false";
-    jsonData["alarmActive"] = alarmObject._alarmPlaying ? "true" : "false";
+    jsonData = alarmObject.generateJSON(jsonData);
 
     String jsonString = JSON.stringify(jsonData);
+    Serial.println(jsonString);
     return jsonString;
 }
 
@@ -23,19 +22,64 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         data[len] = 0;
         message = (char*)data;
         Serial.println("Received: " + message);
-        if (message[0] == 'a') {
-            Serial.println("New alarm time: " + message.substring(1));
-            setAlarm(message.substring(1));
+        if (message[0] == 'l') {
+            Serial.println("New alarm label: " + message.substring(1));
+            alarmObject.setAlarmLabel(message.substring(1));
             notifyClients(getData());
         }
         if (message[0] == 'e') {
             Serial.println("Alarm enabled: " + message.substring(1));
-            setAlarmEnabled(message.substring(1));
+            alarmObject.setAlarmEnabled(message.substring(1) == "true");
+            notifyClients(getData());
+        }
+        if (message[0] == 't') {
+            Serial.println("New alarm time: " + message.substring(1));
+            alarmObject.setAlarmFromString(message.substring(1));
+            notifyClients(getData());
+        }
+        if (message[0] == 'r') {
+            Serial.println("Alarm repeats: " + message.substring(1));
+            alarmObject.setAlarmRepeat(message.substring(1) == "true");
+            notifyClients(getData());
+        }
+        if (message[0] == 'E') {
+            Serial.println("Snooze enabled: " + message.substring(1));
+            alarmObject.setSnoozeEnabled(message.substring(1) == "true");
+            notifyClients(getData());
+        }
+        if (message[0] == 'd') {
+            Serial.println("Snooze duration: " + message.substring(1));
+            alarmObject.setSnoozeDuration(message.substring(1).toInt());
+            notifyClients(getData());
+        }
+        if (message[0] == 'L') {
+            Serial.println("Snooze limit: " + message.substring(1));
+            alarmObject.setSnoozeLimit(message.substring(1).toInt());
+            notifyClients(getData());
+        }
+        if (message[0] == 'v') {
+            Serial.println("Volume: " + message.substring(1));
+            alarmObject.setVolume(message.substring(1).toInt());
+            notifyClients(getData());
+        }
+        if (message[0] == 'R') {
+            Serial.println("Volume ramp enabled: " + message.substring(1));
+            alarmObject.setVolumeRamp(message.substring(1) == "true");
+            notifyClients(getData());
+        }
+        if (message[0] == 'f') {
+            Serial.println("New sound file: " + message.substring(1));
+            alarmObject.setSoundFile(message.substring(1));
             notifyClients(getData());
         }
         if (message[0] == 's') {
             Serial.println("Snooze received");
-            snooze();
+            alarmObject.snoozeAlarm();
+            notifyClients(getData());
+        }
+        if (message[0] == 'S') {
+            Serial.println("Stop received");
+            alarmObject.stopAlarm();
             notifyClients(getData());
         }
         if (message == "getData") {
