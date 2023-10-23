@@ -1,12 +1,62 @@
-<!DOCTYPE HTML><html>
+<!DOCTYPE html>
+<html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" type="text/css" href="style.css">
-  <link rel="icon"  type="image/png" href="favicon.png">
-  <title>ESP Web Server</title>
+    <meta charset="UTF-8">
+    <title>Alarms</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-  <h1>Where would you like to go?</h1>
-  <h3><a href="/alarm">Alarm Clock</a></h3></p>
+    <div id="status" hidden="true">
+        <h1 id="alarmStatus"></h1>
+        <h1 id="snoozeButtonContainer">
+            <button onclick="snooze()" id="snoozeButton">Snooze</button>
+        </h1>
+        <h1 id="stopButtonContainer">
+            <button onclick="stop()" id="stopButton">Stop</button>
+        </h1>
+    </div>
+    <div id="settings">
+        <p>
+            <input type="text" id="alarmLabel" value="Alarm">
+        </p>
+        <h2>
+            <input type="time" id="alarmTime"> <input type="checkbox" id="alarmEnabled">
+        </h2>
+        <p>
+            🔁<input type="checkbox" id="alarmRepeats">
+        </p>
+        <hr/>
+        <p>
+            😴<input type="checkbox" id="snoozeEnabled">
+        </p>
+        <p>
+            <input type="number" id="snoozeDuration" min="1" max="60"> minutes
+        </p>
+        <p>
+            <input type="number" id="snoozeLimit" min="1" max="10"> snoozes
+        </p>
+        <hr/>
+        <p>
+            <span id="volumeIcon">🔉</span><input type="range" onchange="updateVolume(this)" id="volumeSlider" min="0" max="21" step="1" value ="5"><span id="volume">5</span>
+        </p>
+        <p>
+            📈<input type="checkbox" id="rampEnabled">
+        </p>
+        <p> 🎶
+            <select id="soundFileSelect">
+                <option value="/audio/alarm.mp3">Classic</option>
+                <option value="/audio/epic_music.mp3">Epic Music</option>
+            </select>
+        </p>
+        <div>
+          <button onclick="save()">Save changes</button><button onclick="cancel()">Cancel</button>
+        </div>
+    </div>
+    <div id="save">
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>

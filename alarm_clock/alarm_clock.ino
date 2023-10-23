@@ -26,10 +26,10 @@ How to use:
 #include <Arduino_JSON.h>
 
 // Wifi credentials
-// const char* ssid     = "Cozy Cove";
-// const char* password = "Prickly Mochi 1005";
-const char* ssid = "Phony";
-const char* password = "wbjvfkbsj49mf";
+const char* ssid     = "Cozy Cove";
+const char* password = "Prickly Mochi 1005";
+// const char* ssid = "Phony";
+// const char* password = "wbjvfkbsj49mf";
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -141,8 +141,9 @@ void loop() {
     clockController.loop();
     sound.loop();
     if (isNewMinute()) {
-        alarmObject.checkAlarm();
-        notifyClients(getData());
+        if (alarmObject.checkAlarm()) {
+            notifyClients(getData());
+        }
     }
     if (clockController.needsTimeUpdate()) {
         fetchTime();

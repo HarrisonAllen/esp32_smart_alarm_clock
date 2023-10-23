@@ -19,7 +19,16 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         data[len] = 0;
         message = (char*)data;
         Serial.println("Received: " + message);
-        alarmObject.parseJSON(message);
+        if (message == "getData") {
+            Serial.println("Just getting data");
+        } else if (message == "snooze") {
+            alarmObject.snoozeAlarm();
+        } else if (message == "stop") {
+            alarmObject.stopAlarm();
+        } else {
+            alarmObject.parseString(message);
+        }
+        notifyClients(getData());
     }
 }
 
