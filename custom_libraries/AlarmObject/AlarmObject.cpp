@@ -40,78 +40,97 @@ void AlarmObject::init(Sound *sound, ClockController *clockController) {
 
 // Setters
 
-void AlarmObject::resetAlarmTime() {
-    _alarms[0]["alarm"]["currentHour"] = (int)_alarms[0]["alarm"]["hour"];
-    _alarms[0]["alarm"]["currentMinute"] = (int)_alarms[0]["alarm"]["minute"];
+void AlarmObject::resetAlarmTime(int alarmNum) {
+    _alarms[alarmNum]["alarm"]["currentHour"] = (int)_alarms[alarmNum]["alarm"]["hour"];
+    _alarms[alarmNum]["alarm"]["currentMinute"] = (int)_alarms[alarmNum]["alarm"]["minute"];
 }
 
 // Do stuff
 
-bool AlarmObject::checkTime() {
-    return ((int)_alarms[0]["alarm"]["currentHour"] == _clockController->getHour()
-            && (int)_alarms[0]["alarm"]["currentMinute"] == _clockController->getMinute());
+bool AlarmObject::checkTime(int alarmNum) {
+    return ((int)_alarms[alarmNum]["alarm"]["currentHour"] == _clockController->getHour()
+            && (int)_alarms[alarmNum]["alarm"]["currentMinute"] == _clockController->getMinute());
 }
 
-bool AlarmObject::checkAlarm() {
-    if (checkTime()) {
-        return triggerAlarm();
+bool AlarmObject::checkAlarms() {
+    bool anyAlarmTriggered = false;
+    for (int i = 0; i < NUM_ALARMS; i++) {
+        if (checkTime(i)) {
+            anyAlarmTriggered = (anyAlarmTriggered || triggerAlarm(i));
+        }
     }
     return false;
 }
 
-bool AlarmObject::triggerAlarm() {
-    if ((bool)_alarms[0]["alarm"]["enabled"] && !(bool)_alarms[0]["alarm"]["active"]) {
+bool AlarmObject::triggerAlarm(int alarmNum) {
+    if ((bool)_alarms[alarmNum]["alarm"]["enabled"] && !(bool)_alarms[alarmNum]["alarm"]["active"]) {
         Serial.println("Triggering alarm!");
-        strcpy(_soundFileBuffer, (const char*)_alarms[0]["sound"]["file"]);
+        strcpy(_soundFileBuffer, (const char*)_alarms[alarmNum]["sound"]["file"]);
         // ().toCharArray(_soundFileBuffer, 99);
         Serial.println(_soundFileBuffer);
         _sound->setSoundFile(_soundFileBuffer);
-        _sound->setVolume((int)_alarms[0]["sound"]["volume"]);
+        _sound->setVolume((int)_alarms[alarmNum]["sound"]["volume"]);
         _sound->setRepeating(true);
         _sound->play();
-        _alarms[0]["alarm"]["active"] = true;
-        _alarms[0]["snooze"]["active"] = false;
+        _alarms[alarmNum]["alarm"]["active"] = true;
+        _alarms[alarmNum]["snooze"]["active"] = false;
         return true;
     }
     return false;
 }
 
-void AlarmObject::stopAlarm() {
+void AlarmObject::stopAlarms() {
     _sound->stop();
-    _alarms[0]["alarm"]["active"] = false;
-    _alarms[0]["alarm"]["enabled"] = (bool)_alarms[0]["alarm"]["repeat"];
-    resetAlarmTime();
-    _alarms[0]["snooze"]["active"] = false;
-    _alarms[0]["snooze"]["remaining"] = (int)_alarms[0]["snooze"]["limit"];
+    for (int i = 0; i < NUM_ALARMS; i++) {
+        if ((bool)_alarms[i]["alarm"]["active"]) {
+            _alarms[i]["alarm"]["active"] = false;
+            _alarms[i]["alarm"]["enabled"] = (bool)_alarms[i]["alarm"]["repeat"];
+            resetAlarmTime(i);
+            _alarms[i]["snooze"]["active"] = false;
+            _alarms[i]["snooze"]["remaining"] = (int)_alarms[i]["snooze"]["limit"];
+        }
+    }
 }
 
-void AlarmObject::snoozeAlarm() {
-    _sound->stop();
-    _alarms[0]["alarm"]["active"] = false;
-    Serial.printf("Snoozing alarm for %d minutes\n", (int)_alarms[0]["snooze"]["duration"]);
-    offsetAlarm();
-    Serial.printf("New alarm time: %d:%d\n", (int)_alarms[0]["alarm"]["currentHour"], (int)_alarms[0]["alarm"]["currentMinute"]);
-    _alarms[0]["snooze"]["remaining"] = (int)_alarms[0]["snooze"]["remaining"] - 1;
-    _alarms[0]["snooze"]["active"] = true;
+void AlarmObject::snoozeAlarms() {
+    bool anyAlarmsStayOn = false;
+    for (int i = 0; i < NUM_ALARMS; i++) {
+        if ((bool)_alarms[i]["alarm"]["active"])
+        {
+            if ((bool)_alarms[i]["snooze"]["enabled"]) {
+                _alarms[i]["alarm"]["active"] = false;
+                Serial.printf("Snoozing alarm for %d minutes\n", (int)_alarms[i]["snooze"]["duration"]);
+                offsetAlarm(i);
+                Serial.printf("New alarm time: %d:%d\n", (int)_alarms[i]["alarm"]["currentHour"], (int)_alarms[i]["alarm"]["currentMinute"]);
+                _alarms[i]["snooze"]["remaining"] = (int)_alarms[i]["snooze"]["remaining"] - 1;
+                _alarms[i]["snooze"]["active"] = true;
+            } else {
+                anyAlarmsStayOn = true;
+            }
+        }
+    }
+    if (!anyAlarmsStayOn) _sound->stop();
 }
 
 void AlarmObject::parseString(String stringToParse) {
     _alarms = JSON.parse(stringToParse);
     
-    if ((bool)_alarms[0]["alarm"]["active"] && !(bool)_alarms[0]["alarm"]["enabled"]) {
-        stopAlarm();
+    for (int i = 0; i < NUM_ALARMS; i++) {
+        if ((bool)_alarms[i]["alarm"]["active"] && !(bool)_alarms[i]["alarm"]["enabled"]) {
+            stopAlarm();
+        }
     }
     resetAlarmTime();
 }
 
-void AlarmObject::offsetAlarm() {
-    _alarms[0]["alarm"]["currentMinute"] = _clockController->getMinute() + (int)_alarms[0]["snooze"]["duration"];
-    _alarms[0]["alarm"]["currentHour"] = _clockController->getHour();
-    if ((int)_alarms[0]["alarm"]["currentMinute"] >= 60) {
-        _alarms[0]["alarm"]["currentMinute"] = (int)_alarms[0]["alarm"]["currentMinute"] - 60;
-        _alarms[0]["alarm"]["currentHour"] = (int)_alarms[0]["alarm"]["currentHour"] + 1;
-        if ((int)_alarms[0]["alarm"]["currentHour"] > 23) {
-            _alarms[0]["alarm"]["currentHour"] = 0;
+void AlarmObject::offsetAlarm(int alarmNum) {
+    _alarms[alarmNum]["alarm"]["currentMinute"] = _clockController->getMinute() + (int)_alarms[alarmNum]["snooze"]["duration"];
+    _alarms[alarmNum]["alarm"]["currentHour"] = _clockController->getHour();
+    if ((int)_alarms[alarmNum]["alarm"]["currentMinute"] >= 60) {
+        _alarms[alarmNum]["alarm"]["currentMinute"] = (int)_alarms[alarmNum]["alarm"]["currentMinute"] - 60;
+        _alarms[alarmNum]["alarm"]["currentHour"] = (int)_alarms[alarmNum]["alarm"]["currentHour"] + 1;
+        if ((int)_alarms[alarmNum]["alarm"]["currentHour"] > 23) {
+            _alarms[alarmNum]["alarm"]["currentHour"] = 0;
         }
     }
 }

@@ -22,9 +22,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         if (message == "getData") {
             Serial.println("Just getting data");
         } else if (message == "snooze") {
-            alarmObject.snoozeAlarm();
+            alarmObject.snoozeAlarms();
         } else if (message == "stop") {
-            alarmObject.stopAlarm();
+            alarmObject.stopAlarms();
         } else {
             alarmObject.parseString(message);
         }

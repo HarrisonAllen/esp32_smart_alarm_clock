@@ -9,7 +9,7 @@
 #include <Sound.h>
 #include <Arduino_JSON.h>
 
-#define NUM_ALARMS 1
+#define NUM_ALARMS 5
 
 class AlarmObject {
     public:
@@ -18,15 +18,14 @@ class AlarmObject {
         JSONVar createAlarm(JSONVar alarmVar, int index);
         void init(Sound *sound, ClockController *clockController);
         // - Actions
-        void resetAlarmTime();
-        bool checkTime();
-        bool checkAlarm();
-        bool triggerAlarm();
-        void stopAlarm();
-        void snoozeAlarm();
+        void resetAlarmTime(int alarmNum);
+        bool checkTime(int alarmNum);
+        bool checkAlarms();
+        bool triggerAlarm(int alarmNum);
+        void stopAlarms();
+        void snoozeAlarms();
         void parseString(String stringToParse);
-        // - Helpers
-        void offsetAlarm();
+        void offsetAlarm(int alarmNum);
         // Variables
         Sound *_sound;
         ClockController *_clockController;

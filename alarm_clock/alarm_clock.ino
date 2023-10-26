@@ -141,7 +141,7 @@ void loop() {
     clockController.loop();
     sound.loop();
     if (isNewMinute()) {
-        if (alarmObject.checkAlarm()) {
+        if (alarmObject.checkAlarms()) {
             notifyClients(getData());
         }
     }
