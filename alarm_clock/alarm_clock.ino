@@ -106,7 +106,7 @@ void setup() {
 
   // Initialize a NTPClient to get time
   timeClient.begin();
-  timeClient.setTimeOffset(-14400); // GMT -4, hours -> seconds
+  timeClient.setTimeOffset(-18000); // GMT -5, hours -> seconds
   fetchTime();
   lastMinute = clockController.getMinute();
 
