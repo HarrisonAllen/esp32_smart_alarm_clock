@@ -4,8 +4,9 @@
 
 #include "AlarmObject.h"
 
-AlarmObject::AlarmObject() {
-    for (int i = 0; i < NUM_ALARMS; i++) {
+AlarmObject::AlarmObject(int num_alarms) {
+    _num_alarms = num_alarms;
+    for (int i = 0; i < _num_alarms; i++) {
        _alarms = createAlarm(_alarms, i); 
     }
 }
@@ -54,7 +55,7 @@ bool AlarmObject::checkTime(int alarmNum) {
 
 bool AlarmObject::checkAlarms() {
     bool anyAlarmTriggered = false;
-    for (int i = 0; i < NUM_ALARMS; i++) {
+    for (int i = 0; i < _num_alarms; i++) {
         if (checkTime(i)) {
             anyAlarmTriggered = (anyAlarmTriggered || triggerAlarm(i));
         }
@@ -81,8 +82,8 @@ bool AlarmObject::triggerAlarm(int alarmNum) {
 
 void AlarmObject::stopAlarms() {
     _sound->stop();
-    for (int i = 0; i < NUM_ALARMS; i++) {
-        if ((bool)_alarms[i]["alarm"]["active"]) {
+    for (int i = 0; i < _num_alarms; i++) {
+        if ((bool)_alarms[i]["alarm"]["active"] || (bool)_alarms[i]["snooze"]["active"]) {
             _alarms[i]["alarm"]["active"] = false;
             _alarms[i]["alarm"]["enabled"] = (bool)_alarms[i]["alarm"]["repeat"];
             resetAlarmTime(i);
@@ -94,7 +95,7 @@ void AlarmObject::stopAlarms() {
 
 void AlarmObject::snoozeAlarms() {
     bool anyAlarmsStayOn = false;
-    for (int i = 0; i < NUM_ALARMS; i++) {
+    for (int i = 0; i < _num_alarms; i++) {
         if ((bool)_alarms[i]["alarm"]["active"])
         {
             if ((bool)_alarms[i]["snooze"]["enabled"]) {
@@ -114,13 +115,6 @@ void AlarmObject::snoozeAlarms() {
 
 void AlarmObject::parseString(String stringToParse) {
     _alarms = JSON.parse(stringToParse);
-    
-    for (int i = 0; i < NUM_ALARMS; i++) {
-        if ((bool)_alarms[i]["alarm"]["active"] && !(bool)_alarms[i]["alarm"]["enabled"]) {
-            stopAlarm();
-        }
-    }
-    resetAlarmTime();
 }
 
 void AlarmObject::offsetAlarm(int alarmNum) {

@@ -50,7 +50,8 @@ Audio audio;
 Sound sound(&audio);
 
 // Initialize Alarm Objects
-AlarmObject alarmObject = AlarmObject();
+#define NUM_ALARMS 1
+AlarmObject alarmObject = AlarmObject(NUM_ALARMS);
 
 // Local sketch variables
 long wifiTimer;

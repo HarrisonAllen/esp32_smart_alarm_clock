@@ -52,6 +52,8 @@ function save() {
     var minutes = Number(alarmTime[1]);
     alarmData[0]["alarm"]["hour"] = hours;
     alarmData[0]["alarm"]["minute"] = minutes;
+    alarmData[0]["alarm"]["currentHour"] = hours;
+    alarmData[0]["alarm"]["currentMinute"] = minutes;
     alarmData[0]["alarm"]["repeat"] = document.getElementById("alarmRepeats").checked;
     alarmData[0]["snooze"]["enabled"] = document.getElementById("snoozeEnabled").checked;
     alarmData[0]["snooze"]["duration"] = Number(document.getElementById("snoozeDuration").value);

@@ -5,6 +5,7 @@ void notFound(AsyncWebServerRequest *request) {
 
 String getData() {
     String jsonString = JSON.stringify(alarmObject._alarms);
+    Serial.print("Data to send: ");
     Serial.println(jsonString);
     return jsonString;
 }
