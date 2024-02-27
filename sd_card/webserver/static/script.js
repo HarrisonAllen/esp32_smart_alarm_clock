@@ -62,6 +62,7 @@ function save() {
     alarmData[0]["sound"]["ramp"] = document.getElementById("rampEnabled").checked;
     alarmData[0]["sound"]["file"] = document.getElementById("soundFileSelect").value;
     sendData();
+    window.location.reload();
 }
 
 function snooze() {
