@@ -7,6 +7,12 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
+<!--TODO:
+Changing scope: single alarm. What's left:
+- Save json to file on SD card
+- Load file on startup
+- Single alarm page, prettified
+-->
 <body>
     <div id="status" hidden="true">
         <h1 id="alarmStatus"></h1>
@@ -49,6 +55,12 @@
                 <option value="/audio/alarm.mp3">Classic</option>
                 <option value="/audio/epic_music.mp3">Epic Music</option>
             </select>
+        </p>
+        <p>
+            Time offset (e.g. GMT -5 hours = -18000 seconds)
+        </p>
+        <p>
+            <input type="number" id="timeOffset"> seconds
         </p>
         <div>
           <button onclick="save()">Save changes</button><button onclick="cancel()">Cancel</button>

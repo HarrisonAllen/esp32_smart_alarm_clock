@@ -5,6 +5,9 @@
 #include "AlarmObject.h"
 
 AlarmObject::AlarmObject(int num_alarms) {
+    // TODO: check for existing json file, if nonexistent then create new
+    // If file exists, then we need to set _timeOffsetChanged=true
+    _alarms[0]["timeOffset"] = 0;
     _num_alarms = num_alarms;
     for (int i = 0; i < _num_alarms; i++) {
        _alarms = createAlarm(_alarms, i); 
@@ -34,9 +37,10 @@ JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
     return alarmVar;
 }
 
-void AlarmObject::init(Sound *sound, ClockController *clockController) {
+void AlarmObject::init(Sound *sound, ClockController *clockController, NTPClient *timeClient) {
     _sound = sound;
     _clockController = clockController;
+    _timeClient = timeClient;
 }
 
 // Setters
@@ -114,7 +118,14 @@ void AlarmObject::snoozeAlarms() {
 }
 
 void AlarmObject::parseString(String stringToParse) {
+    int oldTimeOffset = (int)_alarms[0]["timeOffset"];
     _alarms = JSON.parse(stringToParse);
+    int newTimeOffset = (int)_alarms[0]["timeOffset"];
+    if (oldTimeOffset != newTimeOffset) {
+        _timeOffsetChanged = true;
+        _timeClient->setTimeOffset(newTimeOffset);
+    }
+    // TODO: write to file here
 }
 
 void AlarmObject::offsetAlarm(int alarmNum) {

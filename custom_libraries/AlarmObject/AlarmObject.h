@@ -7,6 +7,7 @@
 #include "Arduino.h"
 #include <ClockController.h>
 #include <Sound.h>
+#include <NTPClient.h>
 #include <Arduino_JSON.h>
 
 class AlarmObject {
@@ -14,7 +15,7 @@ class AlarmObject {
         // Control Functions
         AlarmObject(int num_alarms);
         JSONVar createAlarm(JSONVar alarmVar, int index);
-        void init(Sound *sound, ClockController *clockController);
+        void init(Sound *sound, ClockController *clockController, NTPClient *timeClient);
         // - Actions
         void resetAlarmTime(int alarmNum);
         bool checkTime(int alarmNum);
@@ -28,8 +29,10 @@ class AlarmObject {
         int _num_alarms;
         Sound *_sound;
         ClockController *_clockController;
+        NTPClient *_timeClient;
         JSONVar _alarms;
         char _soundFileBuffer[100];
+        bool _timeOffsetChanged;
 };
 
 

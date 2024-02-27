@@ -44,6 +44,7 @@ function updateVolume(element) {
 }
 
 function save() {
+    alarmData[0]["timeOffset"] = Number(document.getElementById("timeOffset").value);
     alarmData[0]["label"] = document.getElementById("alarmLabel").value;
     alarmData[0]["hidden"] = false;
     alarmData[0]["alarm"]["enabled"] = document.getElementById("alarmEnabled").checked;
@@ -111,7 +112,9 @@ function updateAlarmVolumeIcon(volume) {
 
 function onMessage(event) {
     console.log(event.data);
-    alarmData = JSON.parse(event.data);
+    alarmData = JSON.parse(event.data); 
+
+    document.getElementById("timeOffset").value = alarmData[0]["timeOffset"];
 
     document.getElementById("alarmLabel").value = alarmData[0]["label"];
     document.getElementById("alarmEnabled").checked = alarmData[0]["alarm"]["enabled"];

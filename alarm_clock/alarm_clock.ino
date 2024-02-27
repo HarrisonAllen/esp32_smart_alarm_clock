@@ -75,7 +75,7 @@ void setup() {
   clockController.displayLoading();
 
   // Setup alarms
-  alarmObject.init(&sound, &clockController);
+  alarmObject.init(&sound, &clockController, &timeClient);
   
   // Start microSD Card
   if(!SD.begin())
@@ -107,7 +107,7 @@ void setup() {
 
   // Initialize a NTPClient to get time
   timeClient.begin();
-  timeClient.setTimeOffset(-18000); // GMT -5, hours -> seconds
+  timeClient.setTimeOffset(0); // GMT -5, hours -> seconds
   fetchTime();
   lastMinute = clockController.getMinute();
 
@@ -142,6 +142,9 @@ void loop() {
     clockController.loop();
     sound.loop();
     if (isNewMinute()) {
+        if (alarmObject._timeOffsetChanged) {
+            alarmObject._timeOffsetChanged = !fetchTime();
+        }
         if (alarmObject.checkAlarms()) {
             notifyClients(getData());
         }
@@ -152,7 +155,7 @@ void loop() {
     ws.cleanupClients();
 }
 
-void fetchTime() {
+bool fetchTime() {
     if (timeClient.update()) {
         hour = timeClient.getHours();
         minute = timeClient.getMinutes();
@@ -160,8 +163,10 @@ void fetchTime() {
         day = timeClient.getDay();
         Serial.println("Fetched time: " + timeClient.getFormattedTime());
         clockController.setTime(hour, minute, second, day);
+        return true;
     } else {
         Serial.println("Failed to fetch time");
         clockController.ignoreTimeUpdate();
+        return false;
     }
 }
