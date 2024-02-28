@@ -5,9 +5,6 @@ How to use:
 */
 /* TODO
     Hard
-    - Store settings into file, and retrieve on boot
-    - Implement multiple alarms
-    - Add more settings to alarms
     - Juice up alarms page
 */
 #include <WiFi.h>
@@ -26,10 +23,8 @@ How to use:
 #include <Arduino_JSON.h>
 
 // Wifi credentials
-const char* ssid     = "Cozy Cove";
-const char* password = "Prickly Mochi 1005";
-// const char* ssid = "Phony";
-// const char* password = "wbjvfkbsj49mf";
+String ssid = "";
+String password = "";
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -51,7 +46,7 @@ Sound sound(&audio);
 
 // Initialize Alarm Objects
 #define NUM_ALARMS 1
-AlarmObject alarmObject = AlarmObject(NUM_ALARMS);
+AlarmObject alarmObject = AlarmObject();
 
 // Local sketch variables
 long wifiTimer;
@@ -74,9 +69,6 @@ void setup() {
   clockController.begin();
   clockController.displayLoading();
 
-  // Setup alarms
-  alarmObject.init(&sound, &clockController, &timeClient);
-  
   // Start microSD Card
   if(!SD.begin())
   {
@@ -84,11 +76,42 @@ void setup() {
     clockController.displayError("E Sd");
     while(true); 
   }
-  
+
+  // Setup alarms
+  alarmObject.init(NUM_ALARMS, &sound, &clockController, &timeClient);
+
+  // Get wifi info from SD card
+  if (SD.exists("/wifi.info")) {
+    File wifiFile = SD.open("/wifi.info");
+    if (wifiFile) {
+      char curChar;
+      bool ssidComplete = false;
+      while (wifiFile.available()) {
+        curChar = (char)wifiFile.read();
+        if (curChar == '\n') {
+          ssidComplete = true;
+          continue;
+        }
+        if (curChar == '\r') {
+            continue;
+        }
+        if (ssidComplete) {
+          password += curChar;
+        } else {
+          ssid += curChar;
+        }
+      }
+      wifiFile.close();
+      Serial.println("Successfully read wifi info from SD");
+    } else {
+      Serial.println("Failed to read wifi info from SD");
+    }
+  }
+
   // Connect to wifi
   Serial.print("Connecting to ");
   Serial.print(ssid);
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid.c_str(), password.c_str());
   wifiTimer = millis();
   while (true) {
     if (millis() - wifiTimer > 500) {
@@ -107,7 +130,6 @@ void setup() {
 
   // Initialize a NTPClient to get time
   timeClient.begin();
-  timeClient.setTimeOffset(0); // GMT -5, hours -> seconds
   fetchTime();
   lastMinute = clockController.getMinute();
 

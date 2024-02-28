@@ -4,14 +4,8 @@
 
 #include "AlarmObject.h"
 
-AlarmObject::AlarmObject(int num_alarms) {
-    // TODO: check for existing json file, if nonexistent then create new
-    // If file exists, then we need to set _timeOffsetChanged=true
-    _alarms[0]["timeOffset"] = 0;
-    _num_alarms = num_alarms;
-    for (int i = 0; i < _num_alarms; i++) {
-       _alarms = createAlarm(_alarms, i); 
-    }
+AlarmObject::AlarmObject() {
+
 }
 
 JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
@@ -37,10 +31,32 @@ JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
     return alarmVar;
 }
 
-void AlarmObject::init(Sound *sound, ClockController *clockController, NTPClient *timeClient) {
+void AlarmObject::init(int numAlarms, Sound *sound, ClockController *clockController, NTPClient *timeClient) {
     _sound = sound;
     _clockController = clockController;
     _timeClient = timeClient;
+
+    if (SD.exists("/config.json")) {
+        File configFile = SD.open("/config.json");
+        if (configFile) {
+            String configString = "";
+            while (configFile.available()) {
+                configString += (char)configFile.read();
+            }
+            configFile.close();
+            Serial.println("Successfully loaded config from file");
+            parseString(configString);
+        } else {
+            Serial.println("Failed to load config from file");
+        }
+    } else {
+        _alarms[0]["timeOffset"] = 0;
+        _numAlarms = numAlarms;
+        for (int i = 0; i < _numAlarms; i++) {
+            _alarms = createAlarm(_alarms, i); 
+        }
+        Serial.println("No config found. Created new alarms");
+    }
 }
 
 // Setters
@@ -59,7 +75,7 @@ bool AlarmObject::checkTime(int alarmNum) {
 
 bool AlarmObject::checkAlarms() {
     bool anyAlarmTriggered = false;
-    for (int i = 0; i < _num_alarms; i++) {
+    for (int i = 0; i < _numAlarms; i++) {
         if (checkTime(i)) {
             anyAlarmTriggered = (anyAlarmTriggered || triggerAlarm(i));
         }
@@ -86,7 +102,7 @@ bool AlarmObject::triggerAlarm(int alarmNum) {
 
 void AlarmObject::stopAlarms() {
     _sound->stop();
-    for (int i = 0; i < _num_alarms; i++) {
+    for (int i = 0; i < _numAlarms; i++) {
         if ((bool)_alarms[i]["alarm"]["active"] || (bool)_alarms[i]["snooze"]["active"]) {
             _alarms[i]["alarm"]["active"] = false;
             _alarms[i]["alarm"]["enabled"] = (bool)_alarms[i]["alarm"]["repeat"];
@@ -99,7 +115,7 @@ void AlarmObject::stopAlarms() {
 
 void AlarmObject::snoozeAlarms() {
     bool anyAlarmsStayOn = false;
-    for (int i = 0; i < _num_alarms; i++) {
+    for (int i = 0; i < _numAlarms; i++) {
         if ((bool)_alarms[i]["alarm"]["active"])
         {
             if ((bool)_alarms[i]["snooze"]["enabled"]) {
@@ -125,7 +141,23 @@ void AlarmObject::parseString(String stringToParse) {
         _timeOffsetChanged = true;
         _timeClient->setTimeOffset(newTimeOffset);
     }
-    // TODO: write to file here
+    
+    if (SD.exists("/config.json")) {
+        Serial.println("Removed old config");
+        SD.remove("/config.json");
+    }
+    
+    File configFile = SD.open("/config.json", FILE_WRITE);
+    configFile.close();
+
+    configFile = SD.open("/config.json", FILE_WRITE);
+    if (configFile) {
+        configFile.print(stringToParse);
+        configFile.close();
+        Serial.println("Successfully saved config to file");
+    } else {
+        Serial.println("Failed to save config to file");
+    }
 }
 
 void AlarmObject::offsetAlarm(int alarmNum) {

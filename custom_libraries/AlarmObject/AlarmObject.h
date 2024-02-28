@@ -5,6 +5,7 @@
 #define AlarmObject_h
 
 #include "Arduino.h"
+#include "SD.h"
 #include <ClockController.h>
 #include <Sound.h>
 #include <NTPClient.h>
@@ -13,9 +14,9 @@
 class AlarmObject {
     public:
         // Control Functions
-        AlarmObject(int num_alarms);
+        AlarmObject();
         JSONVar createAlarm(JSONVar alarmVar, int index);
-        void init(Sound *sound, ClockController *clockController, NTPClient *timeClient);
+        void init(int num_alarms, Sound *sound, ClockController *clockController, NTPClient *timeClient);
         // - Actions
         void resetAlarmTime(int alarmNum);
         bool checkTime(int alarmNum);
@@ -26,7 +27,7 @@ class AlarmObject {
         void parseString(String stringToParse);
         void offsetAlarm(int alarmNum);
         // Variables
-        int _num_alarms;
+        int _numAlarms;
         Sound *_sound;
         ClockController *_clockController;
         NTPClient *_timeClient;
