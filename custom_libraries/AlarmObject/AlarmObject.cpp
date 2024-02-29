@@ -35,6 +35,7 @@ void AlarmObject::init(int numAlarms, Sound *sound, ClockController *clockContro
     _sound = sound;
     _clockController = clockController;
     _timeClient = timeClient;
+    _numAlarms = numAlarms;
 
     if (SD.exists("/config.json")) {
         File configFile = SD.open("/config.json");
@@ -51,7 +52,6 @@ void AlarmObject::init(int numAlarms, Sound *sound, ClockController *clockContro
         }
     } else {
         _alarms[0]["timeOffset"] = 0;
-        _numAlarms = numAlarms;
         for (int i = 0; i < _numAlarms; i++) {
             _alarms = createAlarm(_alarms, i); 
         }
