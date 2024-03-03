@@ -9,8 +9,6 @@ AlarmObject::AlarmObject() {
 }
 
 JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
-    alarmVar[alarmNum]["label"] = "Alarm " + (String)(alarmNum + 1);
-    alarmVar[alarmNum]["hidden"] = true;
     alarmVar[alarmNum]["alarm"]["enabled"] = true;
     alarmVar[alarmNum]["alarm"]["active"] = false;
     alarmVar[alarmNum]["alarm"]["hour"] = 8;
@@ -26,7 +24,6 @@ JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
     alarmVar[alarmNum]["snooze"]["remaining"] = 3;
 
     alarmVar[alarmNum]["sound"]["volume"] = MAX_VOLUME;
-    alarmVar[alarmNum]["sound"]["ramp"] = false;
     alarmVar[alarmNum]["sound"]["file"] = "/audio/alarm.mp3";
     return alarmVar;
 }

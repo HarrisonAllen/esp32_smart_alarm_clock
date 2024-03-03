@@ -5,4 +5,10 @@ html {
 body {
     max-width: 400px; 
     margin:0px auto;
+    background-color: black;
+    color: white;
+}
+#statusContainer {
+    position: fixed;
+    bottom: 0;
 }
