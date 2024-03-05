@@ -3,13 +3,6 @@ How to use:
 - Select "ESP32 Dev Module" as the board type
 - Put the files in sd_card onto the device sd card, that's also where the webpages live
 */
-/* TODO
-    Hard
-    - Store settings into file, and retrieve on boot
-    - Implement multiple alarms
-    - Add more settings to alarms
-    - Juice up alarms page
-*/
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -26,8 +19,8 @@ How to use:
 #include <Arduino_JSON.h>
 
 // Wifi credentials
-const char* ssid     = "Cozy Cove";
-const char* password = "Prickly Mochi 1005";
+String ssid = "";
+String password = "";
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -48,8 +41,7 @@ Audio audio;
 Sound sound(&audio);
 
 // Initialize Alarm Objects
-#define NUM_ALARMS 3
-AlarmObject alarms[NUM_ALARMS];
+#define NUM_ALARMS 1
 AlarmObject alarmObject = AlarmObject();
 
 // Local sketch variables
@@ -73,12 +65,6 @@ void setup() {
   clockController.begin();
   clockController.displayLoading();
 
-  // Setup alarms
-  alarmObject.init(&sound, &clockController);
-  for (uint8_t i = 0; i < NUM_ALARMS; i++) {
-      alarms[i].init(&sound, &clockController);
-  }
-  
   // Start microSD Card
   if(!SD.begin())
   {
@@ -86,11 +72,42 @@ void setup() {
     clockController.displayError("E Sd");
     while(true); 
   }
-  
+
+  // Setup alarms
+  alarmObject.init(NUM_ALARMS, &sound, &clockController, &timeClient);
+
+  // Get wifi info from SD card
+  if (SD.exists("/wifi.info")) {
+    File wifiFile = SD.open("/wifi.info");
+    if (wifiFile) {
+      char curChar;
+      bool ssidComplete = false;
+      while (wifiFile.available()) {
+        curChar = (char)wifiFile.read();
+        if (curChar == '\n') {
+          ssidComplete = true;
+          continue;
+        }
+        if (curChar == '\r') {
+            continue;
+        }
+        if (ssidComplete) {
+          password += curChar;
+        } else {
+          ssid += curChar;
+        }
+      }
+      wifiFile.close();
+      Serial.println("Successfully read wifi info from SD");
+    } else {
+      Serial.println("Failed to read wifi info from SD");
+    }
+  }
+
   // Connect to wifi
   Serial.print("Connecting to ");
   Serial.print(ssid);
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid.c_str(), password.c_str());
   wifiTimer = millis();
   while (true) {
     if (millis() - wifiTimer > 500) {
@@ -109,7 +126,6 @@ void setup() {
 
   // Initialize a NTPClient to get time
   timeClient.begin();
-  timeClient.setTimeOffset(-14400); // GMT -4, hours -> seconds
   fetchTime();
   lastMinute = clockController.getMinute();
 
@@ -144,8 +160,12 @@ void loop() {
     clockController.loop();
     sound.loop();
     if (isNewMinute()) {
-        alarmObject.checkAlarm();
-        notifyClients(getData());
+        if (alarmObject._timeOffsetChanged) {
+            alarmObject._timeOffsetChanged = !fetchTime();
+        }
+        if (alarmObject.checkAlarms()) {
+            notifyClients(getData());
+        }
     }
     if (clockController.needsTimeUpdate()) {
         fetchTime();
@@ -153,7 +173,7 @@ void loop() {
     ws.cleanupClients();
 }
 
-void fetchTime() {
+bool fetchTime() {
     if (timeClient.update()) {
         hour = timeClient.getHours();
         minute = timeClient.getMinutes();
@@ -161,8 +181,10 @@ void fetchTime() {
         day = timeClient.getDay();
         Serial.println("Fetched time: " + timeClient.getFormattedTime());
         clockController.setTime(hour, minute, second, day);
+        return true;
     } else {
         Serial.println("Failed to fetch time");
         clockController.ignoreTimeUpdate();
+        return false;
     }
 }

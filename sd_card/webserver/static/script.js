@@ -4,13 +4,19 @@ window.addEventListener('load', onload);
 
 var max_volume = 21;
 var min_volume = 0;
+var alarmData;      
 
 function onload(event) {
     initWebSocket();
 }
 
-function getData(){
+function getData() {
     websocket.send("getData");
+}
+
+function sendData() {
+    console.log("Sending data");
+    websocket.send(JSON.stringify(alarmData));
 }
 
 function initWebSocket() {
@@ -31,137 +37,175 @@ function onClose(event) {
     setTimeout(initWebSocket, 2000);
 }
 
-function updateAlarmLabel(element) {
-    var newLabel = document.getElementById(element.id).value;
-    console.log("l" + newLabel);
-    websocket.send("l" + newLabel);
+function setAlarmData(data) {
+    var hour = Number(data[0]);
+    var isMorning = data[2] == "AM";
+    if (!isMorning) {
+        if (hour != 12) {
+            hour += 12;
+        }
+    } else {
+        if (hour == 12) {
+            hour = 0;
+        }
+    }
+    var minute = Number(data[1]);
+    var enabled = data[3] == "On";
+    var repeat = data[4] == "Repeat"
+
+    alarmData[0]["alarm"]["enabled"] = enabled;
+    alarmData[0]["alarm"]["hour"] = hour;
+    alarmData[0]["alarm"]["minute"] = minute;
+    alarmData[0]["alarm"]["currentHour"] = hour;
+    alarmData[0]["alarm"]["currentMinute"] = minute;
+    alarmData[0]["alarm"]["repeat"] = repeat;
+
+    sendData();
+    window.location.reload();
 }
 
-function updateAlarmEnabled(element) {
-    var alarmEnabled = document.getElementById(element.id).checked;
-    console.log("e" + alarmEnabled);
-    websocket.send("e" + alarmEnabled);
+function setSnoozeData(data) {
+    var duration = Number(data[0].split(" ")[0]);
+    var limit = Number(data[1].split("x")[0]);
+    var enabled = data[2] == "On";
+
+    alarmData[0]["snooze"]["enabled"] = enabled;
+    alarmData[0]["snooze"]["duration"] = duration;
+    alarmData[0]["snooze"]["limit"] = limit;
+    alarmData[0]["snooze"]["remaining"] = limit;
+
+    sendData();
+    window.location.reload();
 }
 
-function updateAlarmTime(element) {
-    var alarmTime = document.getElementById(element.id).value;
-    console.log("t" + alarmTime);
-    websocket.send("t" + alarmTime);
+function setVolumeData(data) {
+    var volume = Number(data[0]);
+
+    alarmData[0]["sound"]["volume"] = volume;
+
+    sendData();
+    window.location.reload();
 }
 
-function updateAlarmRepeats(element) {
-    var alarmRepeats = document.getElementById(element.id).checked;
-    console.log("r" + alarmRepeats);
-    websocket.send("r" + alarmRepeats);
+function setAudioData(data) {
+    var file = "/audio/" + data[0];
+
+    alarmData[0]["sound"]["file"] = file;
+
+    sendData();
+    window.location.reload();
 }
 
-function updateSnoozeEnabled(element) {
-    var snoozeEnabled = document.getElementById(element.id).checked;
-    console.log("E" + snoozeEnabled);
-    websocket.send("E" + snoozeEnabled);
+function setTimezoneData(data) {
+    var splitData = data[0].split(":");
+    var hour = Number(splitData[0]);
+    var minute = Number(splitData[1]);
+    minute = hour >= 0 ? minute : -minute;
+    var timeOffset = hour * 60 * 60 + minute * 60;
+
+    alarmData[0]["timeOffset"] = timeOffset;
+
+    sendData();
+    window.location.reload();
 }
 
-function updateSnoozeDuration(element) {
-    var snoozeDuration = document.getElementById(element.id).value;
-    console.log("d" + snoozeDuration);
-    websocket.send("d" + snoozeDuration.toString());
+function snooze() {
+    console.log("snooze");
+    websocket.send("snooze");
+    window.location.reload();
 }
 
-function updateSnoozeLimit(element) {
-    var snoozeLimit = document.getElementById(element.id).value;
-    console.log("L" + snoozeLimit);
-    websocket.send("L" + snoozeLimit.toString());
-}
-
-function updateVolume(element) {
-    var volume = document.getElementById(element.id).value;
-    document.getElementById("volume").textContent = volume;
-
-    console.log("v" + volume);
-    websocket.send("v" + volume.toString());
-}
-
-function updateRampEnabled(element) {
-    var rampEnabled = document.getElementById(element.id).checked;
-    console.log("R" + rampEnabled);
-    websocket.send("R" + rampEnabled);
-}
-
-function updateSoundFile(element) {
-    var soundFile = document.getElementById(element.id).value;
-    console.log("f" + soundFile);
-    websocket.send("f" + soundFile);
-}
-
-function snooze(element) {
-    console.log("s");
-    websocket.send("s");
-}
-
-function stop(element) {
-    console.log("S");
-    websocket.send("S");
+function stop() {
+    console.log("stop");
+    websocket.send("stop");
+    window.location.reload();
 }
 
 function updateAlarmStatus(alarmActive, snoozeActive, snoozesRemaining, snoozeEnabled) {
-    var status = document.getElementById("status");
-    var settings = document.getElementById("settings");
-    var snoozeButtonContainer = document.getElementById("snoozeButtonContainer");
-    var stopButtonContainer = document.getElementById("stopButtonContainer");
-    var alarmName = document.getElementById("alarmLabel").value;
+    var alarmStatus = document.getElementById("alarmStatus");
+    var snoozeButton = document.getElementById("snoozeButton");
+    var stopButton = document.getElementById("stopButton");
+    var statusDiv = document.getElementById("status");
     if (alarmActive) {
-        status.hidden = false;
-        settings.hidden = true;
-        alarmStatus.textContent = "🚨 " + alarmName + " 🚨";
-        stopButtonContainer.hidden = false;
+        alarmStatus.textContent = "ALARM";
+        stopButton.disabled = false;
+        snoozeButton.disabled = !(snoozeEnabled && snoozesRemaining > 0);
+        statusDiv.style.display = "block";
     } else if (snoozeActive) {
-        status.hidden = false;
-        settings.hidden = true;
-        alarmStatus.textContent = "😴 " + alarmName + " (" + snoozesRemaining + " left)";
-        stopButtonContainer.hidden = false;
+        alarmStatus.textContent = "zzz x" + snoozesRemaining;
+        stopButton.disabled = false;
+        snoozeButton.disabled = true;
+        statusDiv.style.display = "block";
     } else {
-        status.hidden = true;
-        settings.hidden = false;
-    }
-    snoozeButtonContainer.hidden = !(alarmActive && snoozeEnabled && !snoozeActive && (snoozesRemaining > 0));
-}
-
-function updateAlarmVolumeIcon(volume) {
-    var volumeIcon = document.getElementById("volumeIcon")
-    if (volume === min_volume) {
-        volumeIcon.textContent = "🔈";
-    } else if (volume < (max_volume / 2)) {
-        volumeIcon.textContent = "🔉";
-    } else {
-        volumeIcon.textContent = "🔊";
+        alarmStatus.textContent = "";
+        stopButton.disabled = true;
+        snoozeButton.disabled = true;
+        statusDiv.style.display = "none";
     }
 }
 
 function onMessage(event) {
     console.log(event.data);
-    var alarmData = JSON.parse(event.data);
-    // var keys = Object.keys(alarmData);
+    alarmData = JSON.parse(event.data);
 
-    document.getElementById("alarmLabel").value = alarmData["alarm"]["label"];
-    document.getElementById("alarmEnabled").checked = alarmData["alarm"]["alarm"]["enabled"] === "true";
-    document.getElementById("alarmTime").value = alarmData["alarm"]["alarm"]["time"];
-    document.getElementById("alarmRepeats").checked = alarmData["alarm"]["alarm"]["repeat"] === "true";
+    // Alarm settings
+    var alarmHour = alarmData[0]["alarm"]["hour"];
+    var ampm;
+    if (alarmHour < 12) {
+        ampm = "AM";
+        if (alarmHour == 0) {
+            alarmHour = 12;
+        }
+    } else {
+        ampm = "PM";
+        if (alarmHour != 12) {
+            alarmHour -= 12;
+        }
+    }
+    alarmHour = String(alarmHour);
+    var alarmMinute = String(alarmData[0]["alarm"]["minute"]).padStart(2, '0');
+    var alarmEnabled = alarmData[0]["alarm"]["enabled"] ? "On" : "Off";
+    var alarmRepeat = alarmData[0]["alarm"]["repeat"] ? "Repeat" : "Once";
+    alarmSelect.locatePosition(0, hourArray.indexOf(alarmHour));
+    alarmSelect.locatePosition(1, minArray.indexOf(alarmMinute));
+    alarmSelect.locatePosition(2, amArray.indexOf(ampm));
+    alarmSelect.locatePosition(3, enableArray.indexOf(alarmEnabled));
+    alarmSelect.locatePosition(4, repeatArray.indexOf(alarmRepeat));
+    var alarmText = alarmData[0]["alarm"]["enabled"] ? alarmHour + ":" + alarmMinute + " " + ampm : "OFF";
+    document.getElementById("alarmText").textContent = alarmText;
 
-    document.getElementById("snoozeEnabled").checked = alarmData["alarm"]["snooze"]["enabled"] === "true";
-    document.getElementById("snoozeDuration").value = alarmData["alarm"]["snooze"]["duration"];
-    document.getElementById("snoozeLimit").value = alarmData["alarm"]["snooze"]["limit"];
+    // Snooze settings
+    var snoozeDuration = String(alarmData[0]["snooze"]["duration"]).padStart(2, '0');
+    var snoozeLimit = String(alarmData[0]["snooze"]["limit"]);
+    var snoozeEnabled = alarmData[0]["snooze"]["enabled"] ? "On" : "Off";
+    snoozeSelect.locatePosition(0, snoozeMinArray.indexOf(snoozeDuration + " min"));
+    snoozeSelect.locatePosition(1, snoozesArray.indexOf(snoozeLimit + "x"));
+    snoozeSelect.locatePosition(2, enableArray.indexOf(snoozeEnabled));
+    var snoozeText = alarmData[0]["snooze"]["enabled"] ? snoozeDuration + " x " + snoozeLimit : "OFF";
+    document.getElementById("snoozeText").textContent = snoozeText;
 
-    document.getElementById("volumeSlider").value = alarmData["alarm"]["sound"]["volume"];
-    document.getElementById("volume").textContent = alarmData["alarm"]["sound"]["volume"];
-    document.getElementById("rampEnabled").checked = alarmData["alarm"]["sound"]["ramp"] === "true";
-    document.getElementById("soundFileSelect").value = alarmData["alarm"]["sound"]["file"];
+    // Volume settings
+    var volume = String(alarmData[0]["sound"]["volume"]);
+    volumeSelect.locatePosition(0, volumeArray.indexOf(volume));
+    document.getElementById("volumeText").textContent = volume;
 
-    updateAlarmVolumeIcon(alarmData["alarm"]["sound"]["volume"]);
-    updateAlarmStatus(alarmData["alarm"]["alarm"]["active"] === "true", alarmData["alarm"]["snooze"]["active"] === "true", alarmData["alarm"]["snooze"]["remaining"], alarmData["alarm"]["snooze"]["enabled"] === "true");
+    // Audio settings
+    var fileParts = alarmData[0]["sound"]["file"].split("/");
+    var file = fileParts[fileParts.length - 1];
+    audioSelect.locatePosition(0, audioArray.indexOf(file));
+    document.getElementById("audioText").textContent = file;
 
-    // for (var i = 0; i < keys.length; i++){
-    //     var key = keys[i];
-    //     document.getElementById(key).innerHTML = alarmData[key];
-    //     document.getElementById("slider"+ (i+1).toString()).value = alarmData[key];
-    // }
+    // Timezone settings
+    var timezoneMinute = Math.floor(alarmData[0]["timeOffset"] / 60) % 60;
+    var timezoneHour = Math.floor(((alarmData[0]["timeOffset"] / 60) - timezoneMinute) / 60);
+    if (timezoneHour >= 0) {
+        timezoneHour = "+" + String(timezoneHour);
+    }
+    timezoneMinute = Math.abs(timezoneMinute);
+    var timezone = String(timezoneHour) + ":" + String(timezoneMinute).padStart(2, '0');
+    console.log(timezone);
+    timezoneSelect.locatePosition(0, timezoneArray.indexOf(timezone));
+    document.getElementById("timezoneText").textContent = timezone;
+
+    updateAlarmStatus(alarmData[0]["alarm"]["active"], alarmData[0]["snooze"]["active"], alarmData[0]["snooze"]["remaining"], alarmData[0]["snooze"]["enabled"]);
 }
