@@ -112,28 +112,36 @@ function setTimezoneData(data) {
 function snooze() {
     console.log("snooze");
     websocket.send("snooze");
+    window.location.reload();
 }
 
 function stop() {
     console.log("stop");
     websocket.send("stop");
+    window.location.reload();
 }
 
 function updateAlarmStatus(alarmActive, snoozeActive, snoozesRemaining, snoozeEnabled) {
     var alarmStatus = document.getElementById("alarmStatus");
     var snoozeButton = document.getElementById("snoozeButton");
     var stopButton = document.getElementById("stopButton");
+    var statusDiv = document.getElementById("status");
     if (alarmActive) {
-        alarmStatus.textContent = "🚨 ALARM 🚨";
-        stopButton.enabled = true;
+        alarmStatus.textContent = "ALARM";
+        stopButton.disabled = false;
+        snoozeButton.disabled = !(snoozeEnabled && snoozesRemaining > 0);
+        statusDiv.style.display = "block";
     } else if (snoozeActive) {
-        alarmStatus.textContent = "😴 x" + snoozesRemaining + " left";
-        stopButton.enabled = true;
+        alarmStatus.textContent = "zzz x" + snoozesRemaining;
+        stopButton.disabled = false;
+        snoozeButton.disabled = true;
+        statusDiv.style.display = "block";
     } else {
         alarmStatus.textContent = "";
-        stopButton.enabled = false;
+        stopButton.disabled = true;
+        snoozeButton.disabled = true;
+        statusDiv.style.display = "none";
     }
-    snoozeButton.enabled = alarmActive && snoozeEnabled && !snoozeActive && (snoozesRemaining > 0);
 }
 
 function onMessage(event) {
@@ -163,23 +171,29 @@ function onMessage(event) {
     alarmSelect.locatePosition(2, amArray.indexOf(ampm));
     alarmSelect.locatePosition(3, enableArray.indexOf(alarmEnabled));
     alarmSelect.locatePosition(4, repeatArray.indexOf(alarmRepeat));
+    var alarmText = alarmData[0]["alarm"]["enabled"] ? alarmHour + ":" + alarmMinute + " " + ampm : "OFF";
+    document.getElementById("alarmText").textContent = alarmText;
 
     // Snooze settings
-    var snoozeDuration = String(alarmData[0]["snooze"]["duration"]).padStart(2, '0') + " min";
-    var snoozeLimit = String(alarmData[0]["snooze"]["limit"]) + "x";
-    var snoozeEnabled = alarmData[0]["alarm"]["enabled"] ? "On" : "Off";
-    snoozeSelect.locatePosition(0, snoozeMinArray.indexOf(snoozeDuration));
-    snoozeSelect.locatePosition(1, snoozesArray.indexOf(snoozeLimit));
+    var snoozeDuration = String(alarmData[0]["snooze"]["duration"]).padStart(2, '0');
+    var snoozeLimit = String(alarmData[0]["snooze"]["limit"]);
+    var snoozeEnabled = alarmData[0]["snooze"]["enabled"] ? "On" : "Off";
+    snoozeSelect.locatePosition(0, snoozeMinArray.indexOf(snoozeDuration + " min"));
+    snoozeSelect.locatePosition(1, snoozesArray.indexOf(snoozeLimit + "x"));
     snoozeSelect.locatePosition(2, enableArray.indexOf(snoozeEnabled));
+    var snoozeText = alarmData[0]["snooze"]["enabled"] ? snoozeDuration + " x " + snoozeLimit : "OFF";
+    document.getElementById("snoozeText").textContent = snoozeText;
 
     // Volume settings
     var volume = String(alarmData[0]["sound"]["volume"]);
     volumeSelect.locatePosition(0, volumeArray.indexOf(volume));
+    document.getElementById("volumeText").textContent = volume;
 
     // Audio settings
     var fileParts = alarmData[0]["sound"]["file"].split("/");
     var file = fileParts[fileParts.length - 1];
     audioSelect.locatePosition(0, audioArray.indexOf(file));
+    document.getElementById("audioText").textContent = file;
 
     // Timezone settings
     var timezoneMinute = Math.floor(alarmData[0]["timeOffset"] / 60) % 60;
@@ -191,6 +205,7 @@ function onMessage(event) {
     var timezone = String(timezoneHour) + ":" + String(timezoneMinute).padStart(2, '0');
     console.log(timezone);
     timezoneSelect.locatePosition(0, timezoneArray.indexOf(timezone));
+    document.getElementById("timezoneText").textContent = timezone;
 
     updateAlarmStatus(alarmData[0]["alarm"]["active"], alarmData[0]["snooze"]["active"], alarmData[0]["snooze"]["remaining"], alarmData[0]["snooze"]["enabled"]);
 }

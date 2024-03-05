@@ -1,0 +1,80 @@
+
+@font-face {
+    font-family: sevenSegmentFont;
+    src: url(fonts/digital-7.regular.ttf);
+}
+
+.container {  
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 0.3fr 0.5fr 0.5fr 0.5fr 0.3fr;
+    gap: 2% 4%;
+    grid-auto-flow: row;
+    grid-template-areas:
+      ". ."
+      "alarmGridArea alarmGridArea"
+      "snoozeGridArea volumeGridArea"
+      "audioGridArea timezoneGridArea"
+      ". .";
+    width: 90%;
+    height: 100%;
+    margin-left: 5%;
+    margin-right: 5%;
+    font-family: sevenSegmentFont;
+    text-align: center;
+    color: red;
+}
+
+.container > div {
+    border: 2px solid red;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+    font-size: 10vw;
+}
+
+.container > div > img {
+    width: auto;
+    height: 60%;
+}
+
+.caption {
+    display: block;
+}
+
+.alarmGridArea {
+    grid-area: alarmGridArea;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 25vw !important;
+}
+
+.snoozeGridArea {
+    grid-area: snoozeGridArea;
+}
+
+.volumeGridArea {
+    grid-area: volumeGridArea;
+}
+
+.audioGridArea {
+    grid-area: audioGridArea;
+}
+
+.timezoneGridArea {
+    grid-area: timezoneGridArea;
+}
+
+ul,ol{
+    padding-left:0; 
+    list-style-type:none;
+    margin:0;
+    text-align: center;
+}
+  
+html, body {
+    height: 100%;
+    margin: 0;
+}

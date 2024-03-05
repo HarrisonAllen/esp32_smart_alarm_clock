@@ -7,9 +7,7 @@ html {
   margin: 0;
   padding: 0; 
 }
-body,h1,h2,h3,h4,h5,h6,p,ul,ol,dd,form,span,samp,p,a{
-    font-size: 12px;
-    font-weight: normal;
+ul,ol{
     margin:0;
     text-align: center;
 }
@@ -19,6 +17,8 @@ body,h1,h2,h3,h4,h5,h6,p,ul,ol,dd,form,span,samp,p,a{
 ul,ol{
     padding-left:0; 
     list-style-type:none;
+    margin:0;
+    text-align: center;
 }
 
 li{display: inline-block;}

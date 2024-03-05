@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Alarm Clock</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="container.css">
+    <link rel="stylesheet" type="text/css" href="mobile-select/style/mobileSelect.css">
+    <script src="mobile-select/mobileSelect.js" ></script>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="alarmGridArea" id="alarmTrigger">
+            <span id="alarmText">NULL</span>
+        </div>
+        <div class="snoozeGridArea" id="snoozeTrigger">
+            <img src="images/snooze-lines.png" />
+            <span class="caption" id="snoozeText">NULL</span>
+        </div>
+        <div class="volumeGridArea" id="volumeTrigger">
+            <img src="images/volume.png" />
+            <span class="caption" id="volumeText">NULL</span>
+        </div>
+        <div class="audioGridArea" id="audioTrigger">
+            <img src="images/music.png" />
+            <span class="caption"><marquee scrollamount="4" id="audioText">NULL</marquee></span>
+        </div>
+        <div class="timezoneGridArea" id="timezoneTrigger">
+            <img src="images/timezone.png" />
+            <span class="caption" id="timezoneText">NULL</span>
+        </div>
+    </div>
+    <div id="status" class="overlay">
+        <div class="overlay-content">
+            <span id="alarmStatus">Alarm</span>
+            <button onclick="snooze()" id="snoozeButton">Snooze</button>
+            <button onclick="stop()" id="stopButton">Stop</button>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        // Alarm data
+        var hourArray=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+        var minArray=['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59'];
+        var amArray=['AM', 'PM'];
+        var enableArray=['On', 'Off'];
+        var repeatArray=['Once', 'Repeat'];
+
+        // Snooze data
+        var snoozeMinArray=['01 min', '02 min', '03 min', '04 min', '05 min', '06 min', '07 min', '08 min', '09 min', '10 min', '11 min', '12 min', '13 min', '14 min', '15 min'];
+        var snoozesArray=['1x', '2x', '3x', '4x', '5x'];
+
+        // Volume data
+        var volumeArray=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'];
+
+        // Audio data
+        var audioArray=['alarm.mp3', 'epic_music.mp3'];
+ 
+        // Timezone data
+        var timezoneArray=['-12:00', '-11:00', '-10:00', '-9:30', '-9:00', '-8:00', '-7:00', '-6:00', '-5:00', '-4:00', '-3:30', '-3:00', '-2:00', '-1:00', '+0:00', '+1:00', '+2:00', '+3:00', '+3:30', '+4:00', '+4:30', '+5:00', '+5:30', '+5:45', '+6:00', '+6:30', '+7:00', '+8:00', '+8:45', '+9:00', '+9:30', '+10:00', '+10:30', '+11:00', '+12:00', '+13:00', '+13:45', '+14:00']
+
+        // Alarm settings
+        var alarmSelect = new MobileSelect({
+            trigger: '#alarmTrigger',
+            title: 'Set Alarm',
+            wheels: [
+                {data: hourArray},
+                {data: minArray},
+                {data: amArray},
+                {data: enableArray},
+                {data: repeatArray}
+            ],
+            limit:function(indexArr, data){ 
+                // console.log(data);
+            },
+            callback:function(indexArr, data){
+                console.log(indexArr, data);
+                setAlarmData(data);
+            }
+        });
+
+        // Snooze settings
+        var snoozeSelect = new MobileSelect({
+            trigger: '#snoozeTrigger',
+            title: 'Set Snooze',
+            wheels: [
+                {data: snoozeMinArray},
+                {data: snoozesArray},
+                {data: enableArray}
+            ],
+            limit:function(indexArr, data){ 
+                // console.log(data);
+            },
+            callback:function(indexArr, data){
+                setSnoozeData(data);
+            }
+        });
+
+        // Volume settings
+        var volumeSelect = new MobileSelect({
+            trigger: '#volumeTrigger',
+            title: 'Set Volume',
+            wheels: [
+                {data: volumeArray}
+            ],
+            limit:function(indexArr, data){ 
+                // console.log(data);
+            },
+            callback:function(indexArr, data){
+                setVolumeData(data);
+            }
+        });
+
+        // Audio settings
+        var audioSelect = new MobileSelect({
+            trigger: '#audioTrigger',
+            title: 'Select Audio',
+            wheels: [
+                {data: audioArray}
+            ],
+            limit:function(indexArr, data){ 
+                // console.log(data);
+            },
+            callback:function(indexArr, data){
+                setAudioData(data);
+            }
+        });
+        
+        // Timezone settings
+        var timezoneSelect = new MobileSelect({
+            trigger: '#timezoneTrigger',
+            title: 'Set Time Zone',
+            wheels: [
+                {data: timezoneArray}
+            ],
+            limit:function(indexArr, data){ 
+                // console.log(data);
+            },
+            callback:function(indexArr, data){
+                setTimezoneData(data);
+            }
+        });
+
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>

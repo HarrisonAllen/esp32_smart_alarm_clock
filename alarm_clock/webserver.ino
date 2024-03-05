@@ -11,10 +11,13 @@ String getData() {
 }
 
 void notifyClients(String dataString) {
+    sound.pause();
     ws.textAll(dataString);
+    sound.resume();
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
+    sound.pause();
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
         data[len] = 0;
@@ -31,6 +34,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         }
         notifyClients(getData());
     }
+    sound.resume();
 }
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -56,12 +60,14 @@ void initWebSocket() {
 }
 
 void setupWebPages() {
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SD, "/webserver/index.html", "text/html");
-  });
-  server.on("/alarm", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SD, "/webserver/alarm.html", "text/html");
-  });
-  server.serveStatic("/", SD, "/webserver/static/");
-  server.onNotFound(notFound);
+    sound.pause();
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SD, "/webserver/index.html", "text/html");
+    });
+    server.on("/alarm", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SD, "/webserver/alarm.html", "text/html");
+    });
+    server.serveStatic("/", SD, "/webserver/static/");
+    server.onNotFound(notFound);
+    sound.resume();
 }

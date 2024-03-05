@@ -3,10 +3,6 @@ How to use:
 - Select "ESP32 Dev Module" as the board type
 - Put the files in sd_card onto the device sd card, that's also where the webpages live
 */
-/* TODO
-    Hard
-    - Juice up alarms page
-*/
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
