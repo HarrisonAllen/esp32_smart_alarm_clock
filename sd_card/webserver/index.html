@@ -856,7 +856,7 @@ return MobileSelect;
         </div>
         <div class="audioGridArea" id="audioTrigger">
             <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABAUlEQVR42u2aSw7DIAwFceT7XzldVUKoac3H1MDMmlR6gw1W0pQAAAAAAOBEZLdAd0r3h5CPOXWHgD3ojgHfO275LV054BIV0BJYJp5Nf2kBCXT46omhc67T5wAEIAABCEAAAhCAAAQgAAEIQAACDmSrt8ItL1109dBP66wydLXw34Lla63SdJXwlh2t+R7QJWB0H44q53z98Arw7EPLrrY8N+zLkHcfhr4GZ/Rh2EGotw9nXoGtz13efTii92sl1Gxc6FG4lPBLRLnGsgHhB6HyNLdWg7X6xPNKG30leswg4hXCI7xThfnNAdHDmwW0XkeywL/QJEIfAgAAAAAAzOYFJCtaXfoLy58AAAAASUVORK5CYII=" />
-            <span class="caption"><marquee scrollamount="4" id="audioText">NULL</marquee></span>
+            <span class="caption" id="audioText"><marquee scrollamount="4">NULL</marquee></span>
         </div>
         <div class="timezoneGridArea" id="timezoneTrigger">
             <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAB4klEQVR42u1b267EIAhU0v//5Z6nkzSNtcAM6lp43S03BwRKS0lKSvoy1ZHCzlJOpVJ1CwdoDZ7pkLrKKc9CR402/Krw/3+ejGj9ruGLkEQZX0upDCWf+BDDi2+49nQ9/7PIDEXAXRHWiXsQgaChsoxHThVFC4IEQYwfdepaNHiQIIjx0bWA52q0ypNI473wRPlbnCAjjB8ZElYnSPk4yQoxPFN+9TLQhIL1+kOe9+p6WOLrKmSFvNDrEww3iD3xab0dgQDLSWsOyeWAEW0sgy/FARbFWR0a05lvdlTk9Ec6g6FHi8cRPX2pAS23VX6PRxZC6YBJiWyVukEi43/FJilDIB3wUgfsnANa4fB5BBzRBcxqfDIHpAOUDtgpGZp6gZ0KII1tGQJ5Db7Ezux+PjL+m5Ugcv9uMxK7G7PzUPRgw4o1Fr+OsnpjccJLW52hvdkauhbjha/2xQjlzRBjGyMyFzy9tYIQgBqOwNP7rFVfYScvNkqi5WcliMTayk2PFjmCJpyIIgnlbwkb8cbUiOVmzyaaVZ4gSp2lnDND4i6fXggxrxvWrjC7LhEWPEehoSUHDLOYlrO34u4pndlb4tQ64Elh1ppclPE0BDDa2J//ZCZyQPJTH01FDzmSkpKSmPQHaKkAcSIlhooAAAAASUVORK5CYII=" />
@@ -1171,7 +1171,14 @@ function onMessage(event) {
     var fileParts = alarmData[0]["sound"]["file"].split("/");
     var file = fileParts[fileParts.length - 1];
     audioSelect.locatePosition(0, audioArray.indexOf(file));
-    document.getElementById("audioText").textContent = file;
+    var m = document.createElement("marquee"); 
+    var m_text = document.createTextNode(file); 
+    m.appendChild(m_text); 
+    var audioContent = document.getElementById('audioText');
+    while( audioContent.firstChild ) {
+        audioContent.removeChild( audioContent.firstChild );
+    }
+    audioContent.appendChild(m);
 
     // Timezone settings
     var timezoneMinute = Math.floor(alarmData[0]["timeOffset"] / 60) % 60;
