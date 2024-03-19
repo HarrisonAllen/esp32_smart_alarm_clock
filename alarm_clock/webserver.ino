@@ -111,12 +111,22 @@ void initWebSocket() {
 }
 
 void setupWebPages() {
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SD, "/webserver/index.html", "text/html");
-  });
-  server.on("/alarm", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SD, "/webserver/alarm.html", "text/html");
-  });
-  server.serveStatic("/", SD, "/webserver/static/");
-  server.onNotFound(notFound);
+    sound.pause();
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SD, "/webserver/index.html", "text/html");
+    });
+    server.on("/alarm", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SD, "/webserver/alarm.html", "text/html");
+    });
+    server.on("/snooze", HTTP_GET, [](AsyncWebServerRequest *request) {
+        alarmObject.snoozeAlarms();
+        request->send(200, "text/plain", "Snoozed");
+    });
+    server.on("/stop", HTTP_GET, [](AsyncWebServerRequest *request) {
+        alarmObject.stopAlarms();
+        request->send(200, "text/plain", "Stopped");
+    });
+    server.serveStatic("/", SD, "/webserver/static/");
+    server.onNotFound(notFound);
+    sound.resume();
 }
