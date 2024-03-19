@@ -15,7 +15,7 @@ void Sound::begin() {
 
 void Sound::loop() {
     _audio->loop();
-    if (_playing && !_audio->isRunning()) {
+    if (_playing && !_audio->isRunning() && !_paused) {
         if (_repeat) {
             play();
         } else {
@@ -26,6 +26,7 @@ void Sound::loop() {
 
 void Sound::play() {
     _playing = true;
+    _paused = false;
     _audio->connecttoFS(SD, _filename);
 }
 
@@ -37,7 +38,24 @@ void Sound::playOnce(char *soundFile) {
 
 void Sound::stop() {
     _playing = false;
+    _paused = false;
     _audio->stopSong();
+}
+
+void Sound::pause() {
+    if (_playing && _audio->isRunning()) {
+        _paused = true;
+        _audio->pauseResume();
+        Serial.println("Paused");
+    }
+}
+
+void Sound::resume() {
+    if (_playing && !_audio->isRunning()) {
+        _paused = false;
+        _audio->pauseResume();
+        Serial.println("Resumed");
+    }
 }
 
 int Sound::setVolume(int volume) {

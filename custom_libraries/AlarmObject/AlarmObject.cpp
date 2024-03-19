@@ -8,167 +8,163 @@ AlarmObject::AlarmObject() {
 
 }
 
-// Setters
+JSONVar AlarmObject::createAlarm(JSONVar alarmVar, int alarmNum) {
+    alarmVar[alarmNum]["alarm"]["enabled"] = true;
+    alarmVar[alarmNum]["alarm"]["active"] = false;
+    alarmVar[alarmNum]["alarm"]["hour"] = 8;
+    alarmVar[alarmNum]["alarm"]["minute"] = 0;
+    alarmVar[alarmNum]["alarm"]["currentHour"] = (int)alarmVar[alarmNum]["alarm"]["hour"];
+    alarmVar[alarmNum]["alarm"]["currentMinute"] = (int)alarmVar[alarmNum]["alarm"]["minute"];
+    alarmVar[alarmNum]["alarm"]["repeat"] = true;
 
-void AlarmObject::init(Sound *sound, ClockController *clockController) {
-    _sound = sound;
-    _clockController = clockController;
+    alarmVar[alarmNum]["snooze"]["enabled"] = true;
+    alarmVar[alarmNum]["snooze"]["active"] = false;
+    alarmVar[alarmNum]["snooze"]["duration"] = 5;
+    alarmVar[alarmNum]["snooze"]["limit"] = 3;
+    alarmVar[alarmNum]["snooze"]["remaining"] = 3;
+
+    alarmVar[alarmNum]["sound"]["volume"] = MAX_VOLUME;
+    alarmVar[alarmNum]["sound"]["file"] = "/audio/alarm.mp3";
+    return alarmVar;
 }
 
-void AlarmObject::setAlarmEnabled(bool enabled) {
-    Serial.printf("Alarm %s\n", (enabled ? "enabled" : "disabled"));
-    _alarmEnabled = enabled;
-    if (_alarmActive && enabled) {
-        stopAlarm();
+void AlarmObject::init(int numAlarms, Sound *sound, ClockController *clockController, NTPClient *timeClient) {
+    _sound = sound;
+    _clockController = clockController;
+    _timeClient = timeClient;
+    _numAlarms = numAlarms;
+
+    if (SD.exists("/config.json")) {
+        File configFile = SD.open("/config.json");
+        if (configFile) {
+            String configString = "";
+            while (configFile.available()) {
+                configString += (char)configFile.read();
+            }
+            configFile.close();
+            Serial.println("Successfully loaded config from file");
+            parseString(configString);
+        } else {
+            Serial.println("Failed to load config from file");
+        }
+    } else {
+        _alarms[0]["timeOffset"] = 0;
+        for (int i = 0; i < _numAlarms; i++) {
+            _alarms = createAlarm(_alarms, i); 
+        }
+        Serial.println("No config found. Created new alarms");
     }
 }
 
-void AlarmObject::setAlarmRepeat(bool repeat) {
-    _repeat = repeat;
-}
+// Setters
 
-void AlarmObject::setAlarmLabel(String label) {
-    label.toCharArray(_label, 99);
-}
-
-void AlarmObject::setAlarmActive(bool active) {
-    _alarmActive = active;
-}
-
-void AlarmObject::setAlarmTime(int hour, int minute) {
-    _alarmHour = hour;
-    _alarmMinute = minute;
-    setCurrentAlarmTime(hour, minute);
-}
-
-void AlarmObject::setAlarmFromString(String alarmString) {
-    int alarmHour, alarmMinute;
-    alarmHour = alarmString.substring(0, 2).toInt();
-    alarmMinute = alarmString.substring(3).toInt();
-    setAlarmTime(alarmHour, alarmMinute);
-    setAlarmEnabled(true);
-    Serial.printf("Alarm set for %d:%d\n", alarmHour, alarmMinute);
-}
-
-void AlarmObject::setCurrentAlarmTime(int hour, int minute) {
-    _currentAlarmHour = hour;
-    _currentAlarmMinute = minute;
-}
-
-void AlarmObject::resetAlarmTime() {
-    setAlarmTime(_alarmHour, _alarmMinute);
-}
-
-void AlarmObject::setSnoozeEnabled(bool enabled) {
-    _snoozeEnabled = enabled;
-}
-
-void AlarmObject::setSnoozeDuration(int duration) {
-    _snoozeDuration = duration;
-}
-
-void AlarmObject::setSnoozeLimit(int limit) {
-    _snoozeLimit = limit;
-    setSnoozesRemaining(limit);
-}
-
-void AlarmObject::setSnoozesRemaining(int remaining) {
-    _snoozesRemaining = remaining;
-}
-
-void AlarmObject::setSnoozeActive(bool active) {
-    _snoozeActive = active;
-}
-
-void AlarmObject::setVolume(int volume) {
-    _volume = volume;
-}
-
-void AlarmObject::setVolumeRamp(bool ramp) {
-    _volumeRamp = ramp;
-}
-
-void AlarmObject::setSoundFile(String soundFile) {
-    soundFile.toCharArray(_soundFile, 99);
+void AlarmObject::resetAlarmTime(int alarmNum) {
+    _alarms[alarmNum]["alarm"]["currentHour"] = (int)_alarms[alarmNum]["alarm"]["hour"];
+    _alarms[alarmNum]["alarm"]["currentMinute"] = (int)_alarms[alarmNum]["alarm"]["minute"];
 }
 
 // Do stuff
 
-bool AlarmObject::checkTime() {
-    return (_currentAlarmHour == _clockController->getHour()
-            && _currentAlarmMinute == _clockController->getMinute());
+bool AlarmObject::checkTime(int alarmNum) {
+    return ((int)_alarms[alarmNum]["alarm"]["currentHour"] == _clockController->getHour()
+            && (int)_alarms[alarmNum]["alarm"]["currentMinute"] == _clockController->getMinute());
 }
 
-void AlarmObject::checkAlarm() {
-    if (checkTime()) {
-        triggerAlarm();
+bool AlarmObject::checkAlarms() {
+    bool anyAlarmTriggered = false;
+    for (int i = 0; i < _numAlarms; i++) {
+        if (checkTime(i)) {
+            anyAlarmTriggered = (anyAlarmTriggered || triggerAlarm(i));
+        }
     }
+    return false;
 }
 
-void AlarmObject::triggerAlarm() {
-    if (_alarmEnabled && !_alarmActive) {
+bool AlarmObject::triggerAlarm(int alarmNum) {
+    if ((bool)_alarms[alarmNum]["alarm"]["enabled"] && !(bool)_alarms[alarmNum]["alarm"]["active"]) {
         Serial.println("Triggering alarm!");
-        _sound->setSoundFile(_soundFile);
-        _sound->setVolume(_volume);
+        strcpy(_soundFileBuffer, (const char*)_alarms[alarmNum]["sound"]["file"]);
+        // ().toCharArray(_soundFileBuffer, 99);
+        Serial.println(_soundFileBuffer);
+        _sound->setSoundFile(_soundFileBuffer);
+        _sound->setVolume((int)_alarms[alarmNum]["sound"]["volume"]);
         _sound->setRepeating(true);
         _sound->play();
-        _alarmActive = true;
-        _snoozeActive = false;
+        _alarms[alarmNum]["alarm"]["active"] = true;
+        _alarms[alarmNum]["snooze"]["active"] = false;
+        return true;
     }
+    return false;
 }
 
-void AlarmObject::stopAlarm() {
+void AlarmObject::stopAlarms() {
     _sound->stop();
-    _alarmActive = false;
-    _alarmEnabled = _repeat;
-    resetAlarmTime();
-    _snoozeActive = false;
-    _snoozesRemaining = _snoozeLimit;
-}
-
-void AlarmObject::snoozeAlarm() {
-    _sound->stop();
-    _alarmActive = false;
-    Serial.printf("Snoozing alarm for %d minutes\n", _snoozeDuration);
-    offsetTime(_snoozeDuration, _clockController->getMinute(), _clockController->getHour(), &_currentAlarmMinute, &_currentAlarmHour);
-    Serial.printf("New alarm time: %d:%d\n", _currentAlarmHour, _currentAlarmMinute);
-    _snoozesRemaining--;
-    _snoozeActive = true;
-}
-
-String AlarmObject::generateDisplayAlarm() {
-    sprintf(_alarmText, "%02d:%02d", _alarmHour, _alarmMinute);
-    return String(_alarmText);
-}
-
-JSONVar AlarmObject::generateJSON(JSONVar baseJSON) {
-    baseJSON["alarm"]["label"] = _label; // html js_rec js_send c_rec
-    baseJSON["alarm"]["alarm"]["enabled"] = _alarmEnabled ? "true" : "false"; // html js_rec js_send c_rec
-    baseJSON["alarm"]["alarm"]["active"] = _alarmActive ? "true" : "false"; // html js_rec !js_send !c_rec
-    baseJSON["alarm"]["alarm"]["time"] = generateDisplayAlarm(); // html js_rec js_send c_rec
-    baseJSON["alarm"]["alarm"]["repeat"] = _repeat ? "true" : "false"; // html js_rec js_send c_rec
-
-    baseJSON["alarm"]["snooze"]["enabled"] = _snoozeEnabled ? "true" : "false"; // html js_rec js_send c_rec
-    baseJSON["alarm"]["snooze"]["active"] = _snoozeActive ? "true" : "false"; // html js_rec !js_send !c_rec
-    baseJSON["alarm"]["snooze"]["duration"] = _snoozeDuration; // html js_rec js_send c_rec
-    baseJSON["alarm"]["snooze"]["limit"] = _snoozeLimit; // html js_rec js_send c_rec
-    baseJSON["alarm"]["snooze"]["remaining"] = _snoozesRemaining; // html js_rec !js_send !js_rec
-
-    baseJSON["alarm"]["sound"]["volume"] = _volume; // html js_rec js_send c_rec
-    baseJSON["alarm"]["sound"]["ramp"] = _volumeRamp ? "true" : "false"; // html js_rec js_send c_rec
-    baseJSON["alarm"]["sound"]["file"] = String(_soundFile); // html js_rec js_send c_rec
-    return baseJSON;
-}
-
-void AlarmObject::offsetTime(int minuteOffset, int startMinute, int startHour, int *outMinute, int *outHour) {
-    *outMinute = startMinute + minuteOffset;
-    *outHour = startHour;
-    if (*outMinute >= 60) {
-        *outMinute -= 60;
-        *outHour += 1;
-        if (*outHour > 23) {
-            *outHour = 0;
+    for (int i = 0; i < _numAlarms; i++) {
+        if ((bool)_alarms[i]["alarm"]["active"] || (bool)_alarms[i]["snooze"]["active"]) {
+            _alarms[i]["alarm"]["active"] = false;
+            _alarms[i]["alarm"]["enabled"] = (bool)_alarms[i]["alarm"]["repeat"];
+            resetAlarmTime(i);
+            _alarms[i]["snooze"]["active"] = false;
+            _alarms[i]["snooze"]["remaining"] = (int)_alarms[i]["snooze"]["limit"];
         }
     }
 }
 
+void AlarmObject::snoozeAlarms() {
+    bool anyAlarmsStayOn = false;
+    for (int i = 0; i < _numAlarms; i++) {
+        if ((bool)_alarms[i]["alarm"]["active"])
+        {
+            if ((bool)_alarms[i]["snooze"]["enabled"]) {
+                _alarms[i]["alarm"]["active"] = false;
+                Serial.printf("Snoozing alarm for %d minutes\n", (int)_alarms[i]["snooze"]["duration"]);
+                offsetAlarm(i);
+                Serial.printf("New alarm time: %d:%d\n", (int)_alarms[i]["alarm"]["currentHour"], (int)_alarms[i]["alarm"]["currentMinute"]);
+                _alarms[i]["snooze"]["remaining"] = (int)_alarms[i]["snooze"]["remaining"] - 1;
+                _alarms[i]["snooze"]["active"] = true;
+            } else {
+                anyAlarmsStayOn = true;
+            }
+        }
+    }
+    if (!anyAlarmsStayOn) _sound->stop();
+}
+
+void AlarmObject::parseString(String stringToParse) {
+    int oldTimeOffset = (int)_alarms[0]["timeOffset"];
+    _alarms = JSON.parse(stringToParse);
+    int newTimeOffset = (int)_alarms[0]["timeOffset"];
+    if (oldTimeOffset != newTimeOffset) {
+        _timeOffsetChanged = true;
+        _timeClient->setTimeOffset(newTimeOffset);
+    }
+    
+    if (SD.exists("/config.json")) {
+        Serial.println("Removed old config");
+        SD.remove("/config.json");
+    }
+    
+    File configFile = SD.open("/config.json", FILE_WRITE);
+    configFile.close();
+
+    configFile = SD.open("/config.json", FILE_WRITE);
+    if (configFile) {
+        configFile.print(stringToParse);
+        configFile.close();
+        Serial.println("Successfully saved config to file");
+    } else {
+        Serial.println("Failed to save config to file");
+    }
+}
+
+void AlarmObject::offsetAlarm(int alarmNum) {
+    _alarms[alarmNum]["alarm"]["currentMinute"] = _clockController->getMinute() + (int)_alarms[alarmNum]["snooze"]["duration"];
+    _alarms[alarmNum]["alarm"]["currentHour"] = _clockController->getHour();
+    if ((int)_alarms[alarmNum]["alarm"]["currentMinute"] >= 60) {
+        _alarms[alarmNum]["alarm"]["currentMinute"] = (int)_alarms[alarmNum]["alarm"]["currentMinute"] - 60;
+        _alarms[alarmNum]["alarm"]["currentHour"] = (int)_alarms[alarmNum]["alarm"]["currentHour"] + 1;
+        if ((int)_alarms[alarmNum]["alarm"]["currentHour"] > 23) {
+            _alarms[alarmNum]["alarm"]["currentHour"] = 0;
+        }
+    }
+}

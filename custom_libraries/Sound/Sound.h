@@ -16,9 +16,6 @@
 #define MAX_VOLUME    21
 #define MIN_VOLUME    0
 
-// TODO:
-//  - Consider adding a lock, for example so that the alarm doesn't get overidden by another sound
-
 class Sound {
     public:
         // Control Functions
@@ -27,6 +24,8 @@ class Sound {
         void loop();
         void play();
         void stop();
+        void pause();
+        void resume();
         void playOnce(char * soundFile);
         // Setters
         int setVolume(int volume);
@@ -45,6 +44,7 @@ class Sound {
         Audio *_audio;
         bool _repeat = false;
         bool _playing = false;
+        bool _paused = false;
         char _filename[100] = "/audio/pop.mp3";
 };
 
